@@ -762,6 +762,53 @@
     "51": {
       "0": [ "Data18", "http://www.data18.com", "/search/?k=" ],
     },
+    "52": {
+      "0": [ "Family Therapy XXX", "https://familytherapyxxx.com", "/?s=" ],
+    },
+    "53": {
+      "0": [ "XEmpire", "https://www.xempire.com", "https://tsmkfa364q-3.algolianet.com/1/indexes/*/queries" ],
+      "1": [ "Dark X", "https://www.darkx.com" ],
+      "2": [ "Erotica X", "https://www.erotica.com" ],
+      "3": [ "Hard X", "https://www.hardx.com" ],
+      "4": [ "Lesbian X", "https://www.lesbianx.com"], 
+    },
+    "54": {
+      "0": [ "Blowpass", "https://www.blowpass.com", "https://tsmkfa364q-3.algolianet.com/1/indexes/*/queries" ],
+      "1": [ "1000 Facials", "https://www.1000facials.com" ],
+      "2": [ "Blowbangs", "https://www.blowbangs.com" ],
+      "3": [ "Mommy Blows Best", "https://www.mommyblowsbest.com" ],
+      "4": [ "Only Teen Blowjobs", "https://www.onlyteenblowjobs.com" ],
+      "5": [ "Throated", "https://www.throated.com" ],
+    },
+    "55": {
+      "0": [ "New Sensations", "https://www.newsensations.com", "/tour_ns/updates/" ],
+      "1": [ "Family XXX", "https://familyxxx.com", "/tour_famxxx/updates/" ],
+      "2": [ "HotwifeXXX", "https://www.hotwifexxx.com", "/tour_hwxxx/updates/" ],
+    },
+    "56": {
+      "0": [ "Fit18", "https://fit18.com", "/videos/" ],
+    },
+    "57": {
+      "0": [ "Abby Winters", "https://www.abbywinters.com", "/" ],
+    },
+    "58": {
+      "0": [ "ExploitedCollegeGirls", "https://exploitedcollegegirls.com", "/trailers/" ],
+      "1": [ "BackroomCastingCouch", "https://www.backroomcastingcouch.com", "/trailers/" ],
+      "2": [ "BBCSurprise", "https://bbcsurprise.com/", "/trailers/" ],
+      "3": [ "BlackAmbush", "https://bbcsurprise.com/", "/trailers/" ],
+    },
+    "59": {
+      "0": [ "Tonights Girlfriend", "https://www.tonightsgirlfriend.com", "/search?term=" ],
+     },
+    "60": {
+      "0": [ "She Seduced Me", "https://sheseducedme.com", "/search.php?query=" ],
+    },
+    "61": {
+      "0": [ "PurgatoryX", "https://tour.purgatoryx.com", "/search/" ],
+    },
+    "62": {
+      "0": [ "TS Playground", "https://tsplayground.com", "/search/" ],
+    },
   },
   "SiteIDList": {
     "0": "Network1service",
@@ -826,7 +873,7 @@
     "59": "SiteTonightsGirlfriend",
     "60": "SiteSheSeducedMe",
     "61": "SitePurgatoryX",
-    "62": "SiteTSPlayground"
+    "62": "SiteTSPlayground",
   },
   "Abbrieviations": {
     "^18og": "18OnlyGirls",
