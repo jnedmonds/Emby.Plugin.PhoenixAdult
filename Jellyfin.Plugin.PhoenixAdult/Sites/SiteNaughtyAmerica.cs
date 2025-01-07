@@ -18,80 +18,56 @@ namespace PhoenixAdult.Sites
 {
     public class SiteNaughtyAmerica : IProviderBase
     {
-        public static async Task<JObject> GetDataFromAPI(string url, string searchData, CancellationToken cancellationToken)
-        {
-            JObject json = null;
-
-            var text = $"{{'requests':[{{'indexName':'nacms_combined_production','params':'{searchData}&hitsPerPage=100'}}]}}".Replace('\'', '"');
-            var param = new StringContent(text, Encoding.UTF8, "application/json");
-
-            var http = await HTTP.Request(url, HttpMethod.Post, param, cancellationToken).ConfigureAwait(false);
-            if (http.IsOK)
-            {
-                json = JObject.Parse(http.Content);
-            }
-
-            return json;
-        }
-
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
+            Logger.Debug($"SiteNaughtyAmerica-Search() Starting ********************");
+            Logger.Debug($"SiteNaughtyAmerica-Search() searchTitle: {searchTitle}");
+            
             var result = new List<RemoteSearchResult>();
             if (siteNum == null || string.IsNullOrEmpty(searchTitle))
             {
+                Logger.Debug($"SiteNaughtyAmerica-Search() Leaving early empty search title ********************");
                 return result;
             }
 
-            JObject searchResults;
-            var searchSceneID = searchTitle.Split()[0];
-            string searchParams;
-            if (int.TryParse(searchSceneID, out _))
+            Logger.Debug($"SiteNaughtyAmerica-Search() Searching for results");
+ 
+            var searchURL = Helper.GetSearchSearchURL(siteNum) + searchTitle;
+            var searchData = await HTML.ElementFromURL(searchURL, cancellationToken).ConfigureAwait(false);
+
+            var searchResultNodes = searchData.SelectNodesSafe("//div[@class='scene-grid-item']/a[@class='contain-img']");
+
+            Logger.Debug($"SiteNaughtyAmerica-Search() Found results {searchResultNodes.Count()} now processing");
+ 
+            foreach (var node in searchResultNodes)
             {
-                searchParams = $"filters=id={searchSceneID}";
-            }
-            else
-            {
-                searchParams = $"query={searchTitle}";
-            }
+                var sceneUrl = node.Attributes["href"].Value;
+                Logger.Debug($"SiteNaughtyAmerica-Search() Now processing {sceneUrl}");
+                var sceneID = new List<string> { Helper.Encode(sceneUrl) };
 
-            var url = Helper.GetSearchSearchURL(siteNum) + "?x-algolia-application-id=I6P9Q9R18E&x-algolia-api-key=08396b1791d619478a55687b4deb48b4";
-            searchResults = await GetDataFromAPI(url, searchParams, cancellationToken).ConfigureAwait(false);
-
-            if (searchResults == null)
-            {
-                return result;
-            }
-
-            foreach (var searchResult in searchResults["results"].First["hits"])
-            {
-                string sceneIDs = (string)searchResult["id"],
-                    curID = sceneIDs,
-                    sceneName = (string)searchResult["title"];
-                var sceneDate = (long)searchResult["published_at"];
-                var sceneID = new string[] { curID };
-
-                var posters = (await this.GetImages(siteNum, sceneID, null, cancellationToken).ConfigureAwait(false)).Where(o => o.Type == ImageType.Primary);
-
-                var res = new RemoteSearchResult
+                if (searchDate.HasValue)
                 {
-                    ProviderIds = { { Plugin.Instance.Name, curID } },
-                    Name = sceneName,
-                    PremiereDate = DateTimeOffset.FromUnixTimeSeconds(sceneDate).DateTime,
-                };
-
-                if (posters.Any())
-                {
-                    res.ImageUrl = posters.First().Url;
+                    sceneID.Add(searchDate.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
                 }
 
-                result.Add(res);
+                var searchResult = await Helper.GetSearchResultsFromUpdate(this, siteNum, sceneID.ToArray(), searchDate, cancellationToken).ConfigureAwait(false);
+                if (searchResult.Any())
+                {
+                    Logger.Debug($"SiteNaughtyAmerica-Search() Found title: {sceneName}");
+                    result.AddRange(searchResult);
+                }                
             }
 
+            Logger.Debug($"SiteNaughtyAmerica-Search() Search results: Found {result.Count()} results for searchTitle: {searchTitle}");
+            Logger.Debug($"SiteNaughtyAmerica-Search() Leaving  ********************");
+            
             return result;
         }
 
         public async Task<MetadataResult<BaseItem>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
         {
+            Logger.Debug($"SiteNaughtyAmerica-Update() Starting ********************");
+         
             var result = new MetadataResult<BaseItem>()
             {
                 Item = new Movie(),
@@ -100,46 +76,50 @@ namespace PhoenixAdult.Sites
 
             if (sceneID == null)
             {
+                Logger.Debug($"SiteNaughtyAmerica-Update() Leaving early empty sceneID ********************");
                 return result;
             }
 
-            var url = Helper.GetSearchSearchURL(siteNum) + "?x-algolia-application-id=I6P9Q9R18E&x-algolia-api-key=08396b1791d619478a55687b4deb48b4";
-            var sceneData = await GetDataFromAPI(url, $"filters=id={sceneID[0]}", cancellationToken).ConfigureAwait(false);
-
-            if (sceneData == null)
+            var sceneURL = Helper.Decode(sceneID[0]);
+            if (!sceneURL.StartsWith("http", StringComparison.OrdinalIgnoreCase))
             {
-                return result;
+                sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
             }
 
-            sceneData = (JObject)sceneData["results"].First["hits"].First;
+            Logger.Info($"Loading scene: {sceneURL}");
+            var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
 
-            var sceneURL = Helper.GetSearchBaseURL(siteNum) + $"/scene/0{sceneID[0]}";
             result.Item.ExternalId = sceneURL;
-
-            result.Item.Name = (string)sceneData["title"];
-            result.Item.Overview = (string)sceneData["synopsis"];
             result.Item.AddStudio("Naughty America");
-            if (sceneData.ContainsKey("site"))
+            result.Item.Name = sceneData.SelectSingleText("//div[@class='scene-info']/h1");
+            Logger.Debug($"SiteNaughtyAmerica-Update() overview - APP: {result.Item.Overview}");
+  
+            var date = sceneData.SelectSingleText("//span[contains(@class, 'entry-date')]");
+            if (DateTime.TryParseExact(date, "MMM d, yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
             {
-                result.Item.AddStudio((string)sceneData["site"]);
+                result.Item.PremiereDate = sceneDateObj;
             }
 
-            var sceneDateObj = DateTimeOffset.FromUnixTimeSeconds((long)sceneData["published_at"]);
-            result.Item.PremiereDate = sceneDateObj.DateTime;
-
-            foreach (var genreLink in sceneData["fantasies"])
+            var subSite = sceneData.SelectSingleNode("//div[@class='scene-info']//h2/a");
+            if (subSite != null)
             {
-                var genreName = (string)genreLink;
-
-                result.Item.AddGenre(genreName);
+                result.Item.AddStudio(subSite.InnerText);
             }
 
-            foreach (var actorLink in sceneData["performers"])
-            {
-                string actorName = (string)actorLink,
-                        actorsPageURL;
+            result.Item.Overview = sceneData.SelectSingleText("//div[contains(@class, 'synopsis')]").Substring("Synopsis".Length);
 
-                actorsPageURL = actorName.ToLowerInvariant()
+            var categories = sceneData.SelectNodesSafe("//div[contains(@class, 'categories')]/a");
+            foreach (var category in categories)
+            {
+                result.Item.AddGenre(category.InnerText);
+            }
+
+            var performers = sceneData.SelectNodesSafe("//div[@class='performer-list']/a");
+            foreach (var performer in performers)
+            {
+                var performerName = performer.InnerText;
+
+                string actorsPageURL = performerName.ToLowerInvariant()
                     .Replace(" ", "-", StringComparison.OrdinalIgnoreCase)
                     .Replace("'", string.Empty, StringComparison.OrdinalIgnoreCase);
 
@@ -149,7 +129,7 @@ namespace PhoenixAdult.Sites
 
                 var res = new PersonInfo
                 {
-                    Name = actorName,
+                    Name = performerName,
                 };
 
                 if (!string.IsNullOrEmpty(actorPhoto))
@@ -160,37 +140,52 @@ namespace PhoenixAdult.Sites
                 result.People.Add(res);
             }
 
+            Logger.Debug($"SiteNaughtyAmerica-Update() Updated title: {result.Item.Name}");
+            Logger.Debug($"SiteNaughtyAmerica-Update() Leaving  ********************");
             return result;
         }
 
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
+            Logger.Debug($"SiteNaughtyAmerica-GetImages() Starting ********************");
+            
             var result = new List<RemoteImageInfo>();
 
             if (sceneID == null)
             {
+                Logger.Debug($"SiteNaughtyAmerica-GetImages() Leaving early empty sceneID ********************");
                 return result;
             }
 
-            var sceneURL = Helper.GetSearchBaseURL(siteNum) + $"/scene/0{sceneID[0]}";
-            var sceneDataHTML = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
-
-            var images = sceneDataHTML.SelectNodesSafe("//div[contains(@class, 'contain-scene-images') and contains(@class, 'desktop-only')]/a");
-            foreach (var sceneImages in images)
+            var sceneURL = Helper.Decode(sceneID[0]);
+            if (!sceneURL.StartsWith("http", StringComparison.OrdinalIgnoreCase))
             {
-                var image = $"https:{sceneImages.Attributes["href"].Value}";
+                sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
+            }
+
+            var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
+
+            var galleryImages = sceneData.SelectNodesSafe("//div[@class='contain-scene-images desktop-only']/a");
+            foreach (var image in galleryImages)
+            {
+                Logger.Debug($"SiteNaughtyAmerica-GetImages() Processing image");
+                
+                var imageUrl = "https:" + image.Attributes["href"].Value;
                 result.Add(new RemoteImageInfo
                 {
-                    Url = image,
+                    Url = imageUrl,
                     Type = ImageType.Primary,
                 });
                 result.Add(new RemoteImageInfo
                 {
-                    Url = image,
+                    Url = imageUrl,
                     Type = ImageType.Backdrop,
                 });
             }
 
+            Logger.Debug($"SiteNaughtyAmerica-GetImages() Found {result.Count()} images");
+            Logger.Debug($"SiteNaughtyAmerica-GetImages() Leaving  ********************");
+            
             return result;
         }
     }
