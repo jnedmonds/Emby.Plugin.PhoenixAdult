@@ -18,16 +18,24 @@ namespace PhoenixAdult.Sites
     {
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
+            Logger.Debug($"NetworkNubiles-Search() Starting ********************");
+            Logger.Debug($"NetworkNubiles-Search() searchTitle: {searchTitle}");
+
             var result = new List<RemoteSearchResult>();
             if (siteNum == null || string.IsNullOrEmpty(searchTitle))
             {
+                Logger.Debug($"NetworkNubiles-Search() Leaving early empty search title ********************");
                 return result;
             }
 
             if (searchDate.HasValue)
             {
+                Logger.Debug($"NetworkNubiles-Search() Searching for results with date: {searchDate.ToString()}");
+
                 var date = searchDate.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-                var url = Helper.GetSearchSearchURL(siteNum) + $"date/{date}/{date}";
+
+                // var url = Helper.GetSearchSearchURL(siteNum) + $"date/{date}/{date}";
+                var url = Helper.GetSearchSearchURL(siteNum) + $"date/{date}";
                 var data = await HTML.ElementFromURL(url, cancellationToken).ConfigureAwait(false);
 
                 var searchResults = data.SelectNodesSafe("//div[contains(@class, 'content-grid-item')]");
@@ -57,8 +65,12 @@ namespace PhoenixAdult.Sites
             }
             else
             {
+                Logger.Debug($"NetworkNubiles-Search() No date found so searching via sceneID");
+
                 if (int.TryParse(searchTitle.Split()[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out var sceneNum))
                 {
+                    Logger.Debug($"NetworkNubiles-Search() sceneID: {sceneNum.ToString()}");
+
                     var url = Helper.GetSearchSearchURL(siteNum) + $"watch/{sceneNum}";
                     var sceneURL = new Uri(url);
                     var sceneID = new string[] { Helper.Encode(sceneURL.AbsolutePath) };
@@ -71,11 +83,16 @@ namespace PhoenixAdult.Sites
                 }
             }
 
+            Logger.Debug($"NetworkNubiles-Search() Search results: Found {result.Count} results for searchTitle: {searchTitle}");
+            Logger.Debug($"NetworkNubiles-Search() Leaving  ********************");
+
             return result;
         }
 
         public async Task<MetadataResult<BaseItem>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
         {
+            Logger.Debug($"NetworkNubiles-Update() Starting ********************");
+
             var result = new MetadataResult<BaseItem>()
             {
                 Item = new Movie(),
@@ -84,6 +101,7 @@ namespace PhoenixAdult.Sites
 
             if (sceneID == null)
             {
+                Logger.Debug($"NetworkNubiles-Update() Leaving early empty sceneID ********************");
                 return result;
             }
 
@@ -93,11 +111,16 @@ namespace PhoenixAdult.Sites
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
             }
 
+            Logger.Info($"NetworkNubiles-Update() Loading scene: {sceneURL}");
+
             var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
 
             result.Item.ExternalId = sceneURL;
 
             result.Item.Name = sceneData.SelectSingleText("//div[contains(@class, 'content-pane-title')]//h2");
+
+            Logger.Debug($"NetworkNubiles-Update() Title: {result.Item.Name}");
+
             var description = sceneData.SelectSingleText("//div[@class='col-12 content-pane-column']/div");
             if (string.IsNullOrEmpty(description))
             {
@@ -121,17 +144,25 @@ namespace PhoenixAdult.Sites
                 result.Item.PremiereDate = sceneDateObj;
             }
 
+            Logger.Debug($"SitePornhub-Update() Processing Genres");
+
             var genreNode = sceneData.SelectNodesSafe("//div[@class='categories']/a");
             foreach (var genreLink in genreNode)
             {
+                Logger.Debug($"SitePornhub-Update() Found genre: {genreLink.InnerText}");
+
                 var genreName = genreLink.InnerText;
 
                 result.Item.AddGenre(genreName);
             }
 
+            Logger.Debug($"SitePornhub-Update() Processing Actors");
+
             var actorsNode = sceneData.SelectNodesSafe("//div[contains(@class, 'content-pane-performer')]/a");
             foreach (var actorLink in actorsNode)
             {
+                Logger.Debug($"SitePornhub-Update() Found actor: {actorLink.InnerText}");
+
                 string actorName = actorLink.InnerText,
                     actorPageURL = Helper.GetSearchBaseURL(siteNum) + actorLink.Attributes["href"].Value;
 
@@ -145,15 +176,21 @@ namespace PhoenixAdult.Sites
                 });
             }
 
+            Logger.Debug($"NetworkNubiles-Update() Updated title: {result.Item.Name}");
+            Logger.Debug($"NetworkNubiles-Update() Leaving  ********************");
+
             return result;
         }
 
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
+            Logger.Debug($"NetworkNubiles-GetImages() Starting ********************");
+
             var result = new List<RemoteImageInfo>();
 
             if (sceneID == null)
             {
+                Logger.Debug($"NetworkNubiles-GetImages() Leaving early empty sceneID ********************");
                 return result;
             }
 
@@ -168,6 +205,8 @@ namespace PhoenixAdult.Sites
             var poster = sceneData.SelectSingleText("//video/@poster");
             if (!string.IsNullOrEmpty(poster))
             {
+                Logger.Debug($"NetworkNubiles-GetImages() Processing image");
+
                 result.Add(new RemoteImageInfo
                 {
                     Url = poster,
@@ -180,6 +219,8 @@ namespace PhoenixAdult.Sites
             var sceneImages = photoPage.SelectNodesSafe("//div[@class='img-wrapper']//source[1]");
             foreach (var sceneImage in sceneImages)
             {
+                Logger.Debug($"NetworkNubiles-GetImages() Processing image");
+
                 var posterURL = sceneImage.Attributes["src"].Value;
 
                 result.Add(new RemoteImageInfo
@@ -188,6 +229,9 @@ namespace PhoenixAdult.Sites
                     Type = ImageType.Backdrop,
                 });
             }
+
+            Logger.Debug($"NetworkNubiles-GetImages() Found {result.Count()} images");
+            Logger.Debug($"NetworkNubiles-GetImages() Leaving  ********************");
 
             return result;
         }

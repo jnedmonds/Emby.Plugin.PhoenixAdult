@@ -251,7 +251,8 @@ namespace PhoenixAdult.Providers
 
             var actorData = await HTML.ElementFromURL(url, cancellationToken).ConfigureAwait(false);
 
-            var img = actorData.SelectSingleText("//table[@class='infobox']//a[@class='image']//img/@src");
+            // var img = actorData.SelectSingleText("//table[@class='infobox']//a[@class='image']//img/@src");
+            var img = actorData.SelectSingleText("//table[contains(@class, 'infobox')]//a[@class='mw-file-description']//img/@src");
             if (!string.IsNullOrEmpty(img) && !img.Contains("NoImage", StringComparison.OrdinalIgnoreCase))
             {
                 Logger.Debug($"ActorImageProvider-GetFromBoobpedia() Found actor page");

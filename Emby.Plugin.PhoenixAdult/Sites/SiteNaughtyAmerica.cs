@@ -87,13 +87,14 @@ namespace PhoenixAdult.Sites
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
             }
 
-            Logger.Info($"Loading scene: {sceneURL}");
+            Logger.Info($"SitePornhub-Update() Loading scene: {sceneURL}");
             var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
 
             result.Item.ExternalId = sceneURL;
             result.Item.AddStudio("Naughty America");
             result.Item.Name = sceneData.SelectSingleText("//div[@class='scene-info']/h1");
-            Logger.Debug($"SiteNaughtyAmerica-Update() overview - APP: {result.Item.Overview}");
+
+            Logger.Debug($"SiteNaughtyAmerica-Update() overview: {result.Item.Overview}");
 
             var date = sceneData.SelectSingleText("//span[contains(@class, 'entry-date')]");
             if (DateTime.TryParseExact(date, "MMM d, yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
@@ -126,7 +127,9 @@ namespace PhoenixAdult.Sites
 
                 var actorURL = $"https://www.naughtyamerica.com/pornstar/{actorsPageURL}";
                 var actorData = await HTML.ElementFromURL(actorURL, cancellationToken).ConfigureAwait(false);
-                var actorPhoto = actorData.SelectSingleText("//img[@class='performer-pic']/@src");
+
+                // var actorPhoto = actorData.SelectSingleText("//img[@class='performer-pic']/@src");
+                var actorPhoto = actorData.SelectSingleText("//img[contains(@class, 'performer-pic')]/@src");
 
                 var res = new PersonInfo
                 {
