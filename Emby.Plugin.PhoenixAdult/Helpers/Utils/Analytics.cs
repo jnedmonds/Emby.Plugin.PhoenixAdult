@@ -64,7 +64,7 @@ namespace PhoenixAdult.Helpers.Utils
             {
             }
 
-            if (Plugin.Instance.Configuration.EnableDebug)
+            if (Plugin.Instance.Configuration.EnableDebugging)
             {
                 if (!Directory.Exists(LogsPath))
                 {

@@ -16,6 +16,7 @@ define(['baseView', 'loading', 'emby-input', 'emby-button', 'emby-checkbox', 'em
 
         ApiClient.getPluginConfiguration(phoenixAdultConfig.pluginUniqueId).then(function (config) {
 
+            config.EnableDebugging = form.querySelector('.EnableDebugging').checked;
             config.DisableCaching = form.querySelector('.DisableCaching').checked;
             config.DisableSSLCheck = form.querySelector('.DisableSSLCheck').checked;
             config.ProxyEnable = form.querySelector('.ProxyEnable').checked;
@@ -62,7 +63,8 @@ define(['baseView', 'loading', 'emby-input', 'emby-button', 'emby-checkbox', 'em
         ApiClient.getPluginConfiguration(phoenixAdultConfig.pluginUniqueId).then(function (config) {
             var view = instance.view;
 
-            view.querySelector('.DisableCaching').checked = config.DisableCaching;
+            view.querySelector('.EnableDebugging').checked = config.EnableDebugging;
+            view.querySelector('.DisableCaching').checked = config.DisableCaching;            
             view.querySelector('.DisableSSLCheck').checked = config.DisableSSLCheck;
             view.querySelector('.ProxyEnable').checked = config.ProxyEnable;
             view.querySelector('.ProxyHost').value = config.ProxyHost;

@@ -207,9 +207,9 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
-            string apiKEY = await GetAPIKey(siteNum, cancellationToken).ConfigureAwait(false),
-                   sceneType = sceneID[1] == "scenes" ? "clip_id" : "movie_id",
-                   url = $"{Helper.GetSearchSearchURL(siteNum)}?x-algolia-application-id=TSMKFA364Q&x-algolia-api-key={apiKEY}";
+            string apiKEY = await GetAPIKey(siteNum, cancellationToken).ConfigureAwait(false);
+            string sceneType = sceneID[1] == "scenes" ? "clip_id" : "movie_id";
+            string url = $"{Helper.GetSearchSearchURL(siteNum)}?x-algolia-application-id=TSMKFA364Q&x-algolia-api-key={apiKEY}";
             var sceneData = await GetDataFromAPI(url, $"all_{sceneID[1]}", Helper.GetSearchBaseURL(siteNum), $"filters={sceneType}={sceneID[0]}", cancellationToken).ConfigureAwait(false);
             if (sceneData == null)
             {
@@ -315,9 +315,10 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
-            string apiKEY = await GetAPIKey(siteNum, cancellationToken).ConfigureAwait(false),
-                   sceneType = sceneID[1] == "scenes" ? "clip_id" : "movie_id",
-                   url = $"{Helper.GetSearchSearchURL(siteNum)}?x-algolia-application-id=TSMKFA364Q&x-algolia-api-key={apiKEY}";
+            string apiKEY = await GetAPIKey(siteNum, cancellationToken).ConfigureAwait(false);
+            string sceneType = sceneID[1] == "scenes" ? "clip_id" : "movie_id";
+            string url = $"{Helper.GetSearchSearchURL(siteNum)}?x-algolia-application-id=TSMKFA364Q&x-algolia-api-key={apiKEY}";
+
             var sceneData = await GetDataFromAPI(url, $"all_{sceneID[1]}", Helper.GetSearchBaseURL(siteNum), $"filters={sceneType}={sceneID[0]}", cancellationToken).ConfigureAwait(false);
             if (sceneData == null)
             {

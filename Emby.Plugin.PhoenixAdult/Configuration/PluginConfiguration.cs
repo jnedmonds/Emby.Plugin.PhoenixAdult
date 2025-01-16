@@ -29,8 +29,9 @@ namespace PhoenixAdult.Configuration
             this.TokenStorage = string.Empty;
 
             this.UID = Guid.NewGuid().ToString();
+
             this.DisableAnalytics = false;
-            this.EnableDebug = false;
+            this.EnableDebugging = false;
 
             this.DisableCaching = false;
             this.DisableSSLCheck = false;
@@ -68,7 +69,7 @@ namespace PhoenixAdult.Configuration
 
         public bool DisableAnalytics { get; set; }
 
-        public bool EnableDebug { get; set; }
+        public bool EnableDebugging { get; set; }
 
         public bool DisableCaching { get; set; }
 
