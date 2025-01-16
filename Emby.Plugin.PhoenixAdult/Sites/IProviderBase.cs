@@ -10,6 +10,11 @@ namespace PhoenixAdult.Sites
 {
     internal interface IProviderBase
     {
+        public static string GetCurrentMethod([System.Runtime.CompilerServices.CallerMemberName] string method = "")
+        {
+            return method;
+        }
+
         Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken);
 
         Task<MetadataResult<BaseItem>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken);

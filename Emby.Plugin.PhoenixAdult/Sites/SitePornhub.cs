@@ -136,15 +136,15 @@ namespace PhoenixAdult.Sites
                 Logger.Debug($"SitePornhub-Update(): studio: Pornhub");
             }
 
-            var subSite = sceneData.SelectSingleText("//div[@class='userInfo']//a");
-            if (!string.IsNullOrEmpty(subSite))
+            var subSites = sceneData.SelectNodesSafe("//div[@class='userInfo']//a");
+            foreach (var subSite in subSites)
             {
                 if (Plugin.Instance.Configuration.EnableDebugging)
                 {
-                    Logger.Debug($"SitePornhub-Update(): sub-studio: {subSite}");
+                    Logger.Debug($"SitePornhub-Update(): sub-studio: {subSite.InnerText}");
                 }
 
-                result.Item.AddStudio(subSite);
+                result.Item.AddStudio(subSite.InnerText);
             }
 
             if (sceneDataJSON != null)
@@ -196,16 +196,15 @@ namespace PhoenixAdult.Sites
             }
 
             var actorsNode = sceneData.SelectNodesSafe("//div[contains(@class, 'pornstarsWrapper')]/a");
-
             foreach (var actorLink in actorsNode)
             {
-                if (Plugin.Instance.Configuration.EnableDebugging)
-                {
-                    Logger.Debug($"SitePornhub-Update(): Found actor: {actorLink.InnerText.Trim()}");
-                }
-
                 string actorName = actorLink.InnerText;
                 string actorPhotoURL = actorLink.SelectSingleText(".//img[@class='avatar']/@src");
+
+                if (Plugin.Instance.Configuration.EnableDebugging)
+                {
+                    Logger.Debug($"SitePornhub-Update(): Found actor: {actorName}");
+                }
 
                 var res = new PersonInfo
                 {
@@ -214,7 +213,12 @@ namespace PhoenixAdult.Sites
 
                 if (!string.IsNullOrEmpty(actorPhotoURL))
                 {
-                    res.ImageUrl = $"https:" + actorPhotoURL;
+                    res.ImageUrl = actorPhotoURL;
+
+                    if (Plugin.Instance.Configuration.EnableDebugging)
+                    {
+                        Logger.Debug($"SitePornhub-Update(): Found actor photoURL: {res.ImageUrl.ToString()}");
+                    }
                 }
 
                 result.People.Add(res);

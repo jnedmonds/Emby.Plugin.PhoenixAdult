@@ -63,6 +63,10 @@
     </EmbeddedResource>
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Data\" />
+  </ItemGroup>
+
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
     <Exec Command="call postbuild.bat &quot;$(AssemblyName)&quot; &quot;$(AssemblyVersion)&quot; &quot;$(Configuration)&quot; &quot;$(OutDir)&quot; &quot;$(ProjectDir)&quot; &quot;$(SolutionDir)&quot; &quot;$(SolutionName)&quot; &quot;$(TargetFileName)&quot; &quot;$(TargetPath)&quot;" />
   </Target>
