@@ -21,20 +21,20 @@ namespace PhoenixAdult.Sites
     {
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
-            Logger.Debug($"SitePornhub-Search(): ***** Starting - searchTitle: {searchTitle}");
+            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): ***** Starting - searchTitle: {searchTitle}");
 
             var result = new List<RemoteSearchResult>();
             if (siteNum == null || string.IsNullOrEmpty(searchTitle))
             {
-                Logger.Debug($"SitePornhub-Search(): **** Leaving early empty search title");
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): ***** Leaving early empty search title");
                 return result;
             }
 
-            Logger.Debug($"SitePornhub-Search(): Searching for results");
+            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Searching for results");
 
             if ((searchTitle.StartsWith("ph", StringComparison.OrdinalIgnoreCase) || int.TryParse(searchTitle, out _)) && !searchTitle.Contains(' ', StringComparison.OrdinalIgnoreCase))
             {
-                Logger.Debug($"SitePornhub-Search(): Found video ID: {searchTitle}");
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found video ID: {searchTitle}");
 
                 var sceneURL = new Uri(Helper.GetSearchBaseURL(siteNum) + $"/view_video.php?viewkey={searchTitle}");
                 var sceneID = new string[] { Helper.Encode(sceneURL.PathAndQuery) };
@@ -42,13 +42,13 @@ namespace PhoenixAdult.Sites
                 var searchResult = await Helper.GetSearchResultsFromUpdate(this, siteNum, sceneID, searchDate, cancellationToken).ConfigureAwait(false);
                 if (searchResult.Any())
                 {
-                    Logger.Debug($"SitePornhub-Search(): Found title: {searchResult.First().Name}");
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found title: {searchResult.First().Name}");
                     result.AddRange(searchResult);
                 }
             }
             else
             {
-                Logger.Debug($"SitePornhub-Search(): Searching for title: {searchTitle}");
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Searching for results");
 
                 searchTitle = searchTitle.Replace(" ", "+", StringComparison.OrdinalIgnoreCase);
                 var searchURL = Helper.GetSearchSearchURL(siteNum) + searchTitle;
@@ -56,16 +56,19 @@ namespace PhoenixAdult.Sites
 
                 var searchResultNodes = searchData.SelectNodesSafe("//ul[@id='videoSearchResult']/li[@data-video-vkey]");
 
-                Logger.Debug($"SitePornhub-Search(): Found results {searchResultNodes.Count} now processing");
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found results {searchResultNodes.Count} now processing");
 
                 foreach (var searchResult in searchResultNodes)
                 {
-                    var sceneURL = new Uri(Helper.GetSearchBaseURL(siteNum) + searchResult.SelectSingleText(".//a/@href"));
-                    string curID = Helper.Encode(sceneURL.PathAndQuery);
+                    var sceneUrl = new Uri(Helper.GetSearchBaseURL(siteNum) + searchResult.SelectSingleText(".//a/@href"));
+
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing {sceneUrl}");
+
+                    string curID = Helper.Encode(sceneUrl.PathAndQuery);
                     string sceneName = searchResult.SelectSingleText(".//span[@class='title']");
                     string scenePoster = searchResult.SelectSingleText(".//div[@class='phimage']//img/@data-thumb_url");
 
-                    Logger.Debug($"SitePornhub-Search(): Found title: {sceneName}");
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found title: {sceneName}");
 
                     var res = new RemoteSearchResult
                     {
@@ -78,14 +81,14 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            Logger.Debug($"SitePornhub-Search(): **** Leaving - Search results: Found {result.Count} results for searchTitle: {searchTitle}");
+            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): **** Leaving - Search results: Found {result.Count} results for searchTitle: {searchTitle}");
 
             return result;
         }
 
         public async Task<MetadataResult<BaseItem>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
         {
-            Logger.Debug($"SitePornhub-Update(): **** Starting");
+            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): **** Starting");
 
             var result = new MetadataResult<BaseItem>()
             {
@@ -95,7 +98,7 @@ namespace PhoenixAdult.Sites
 
             if (sceneID == null)
             {
-                Logger.Debug($"SitePornhub-Update(): **** Leaving early empty sceneID");
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): **** Leaving early empty sceneID");
                 return result;
             }
 
@@ -105,7 +108,7 @@ namespace PhoenixAdult.Sites
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
             }
 
-            Logger.Info($"SitePornhub-Update(): Loading scene: {sceneURL}");
+            Logger.Info($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Loading scene: {sceneURL}");
 
             // var http = await HTTP.Request(sceneURL, HttpMethod.Post, cancellationToken).ConfigureAwait(false);
             // var sceneData = HTML.ElementFromStream(http.ContentStream);
@@ -122,18 +125,18 @@ namespace PhoenixAdult.Sites
 
             if (Plugin.Instance.Configuration.EnableDebugging)
             {
-                Logger.Debug($"SitePornhub-Update(): externalID: {result.Item.ExternalId}");
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): externalID: {result.Item.ExternalId}");
             }
 
             result.Item.Name = sceneData.SelectSingleText("//h1[@class='title']");
 
-            Logger.Debug($"SitePornhub-Update(): title: {result.Item.Name}");
+            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): title: {result.Item.Name}");
 
             result.Item.AddStudio("Pornhub");
 
             if (Plugin.Instance.Configuration.EnableDebugging)
             {
-                Logger.Debug($"SitePornhub-Update(): studio: Pornhub");
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): studio: Pornhub");
             }
 
             var subSites = sceneData.SelectNodesSafe("//div[@class='userInfo']//a");
@@ -141,17 +144,22 @@ namespace PhoenixAdult.Sites
             {
                 if (Plugin.Instance.Configuration.EnableDebugging)
                 {
-                    Logger.Debug($"SitePornhub-Update(): sub-studio: {subSite.InnerText}");
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): sub-studio: {subSite.InnerText}");
                 }
 
                 result.Item.AddStudio(subSite.InnerText);
+            }
+
+            if (Plugin.Instance.Configuration.EnableDebugging)
+            {
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Finding Premier date");
             }
 
             if (sceneDataJSON != null)
             {
                 if (Plugin.Instance.Configuration.EnableDebugging)
                 {
-                    Logger.Debug($"SitePornhub-Update(): Parsing JSON for upload date");
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Parsing JSON for upload date");
                 }
 
                 var date = (string)sceneDataJSON["uploadDate"];
@@ -159,14 +167,14 @@ namespace PhoenixAdult.Sites
                 {
                     if (Plugin.Instance.Configuration.EnableDebugging)
                     {
-                        Logger.Debug($"SitePornhub-Update(): Found date - converting");
+                        Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found date - converting");
                     }
 
                     if (DateTime.TryParse(date, CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
                     {
                         if (Plugin.Instance.Configuration.EnableDebugging)
                         {
-                            Logger.Debug($"SitePornhub-Update(): Premier date added {sceneDateObj.ToString()}");
+                            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Premier date added {sceneDateObj.ToString()}");
                         }
 
                         result.Item.PremiereDate = sceneDateObj;
@@ -176,7 +184,7 @@ namespace PhoenixAdult.Sites
 
             if (Plugin.Instance.Configuration.EnableDebugging)
             {
-                Logger.Debug($"SitePornhub-Update(): Processing Genres");
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing Genres");
             }
 
             var genreNode = sceneData.SelectNodesSafe("(//div[@class='categoriesWrapper'] | //div[@class='tagsWrapper'])/a");
@@ -184,7 +192,7 @@ namespace PhoenixAdult.Sites
             {
                 if (Plugin.Instance.Configuration.EnableDebugging)
                 {
-                    Logger.Debug($"SitePornhub-Update(): Found genre: {genreLink.InnerText.Trim()}");
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found genre: {genreLink.InnerText.Trim()}");
                 }
 
                 result.Item.AddGenre(genreLink.InnerText);
@@ -192,7 +200,7 @@ namespace PhoenixAdult.Sites
 
             if (Plugin.Instance.Configuration.EnableDebugging)
             {
-                Logger.Debug($"SitePornhub-Update(): Processing Actors");
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing Actors");
             }
 
             var actorsNode = sceneData.SelectNodesSafe("//div[contains(@class, 'pornstarsWrapper')]/a");
@@ -203,7 +211,7 @@ namespace PhoenixAdult.Sites
 
                 if (Plugin.Instance.Configuration.EnableDebugging)
                 {
-                    Logger.Debug($"SitePornhub-Update(): Found actor: {actorName}");
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found actor: {actorName}");
                 }
 
                 var res = new PersonInfo
@@ -217,27 +225,27 @@ namespace PhoenixAdult.Sites
 
                     if (Plugin.Instance.Configuration.EnableDebugging)
                     {
-                        Logger.Debug($"SitePornhub-Update(): Found actor photoURL: {res.ImageUrl.ToString()}");
+                        Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found actor photoURL: {res.ImageUrl.ToString()}");
                     }
                 }
 
                 result.People.Add(res);
             }
 
-            Logger.Debug($"SitePornhub-Update(): **** Leaving - Updated title: {result.Item.Name}");
+            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): **** Leaving - Updated title: {result.Item.Name}");
 
             return result;
         }
 
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
-            Logger.Debug($"SitePornhub-GetImages(): **** Starting");
+            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): **** Starting");
 
             var result = new List<RemoteImageInfo>();
 
             if (sceneID == null)
             {
-                Logger.Debug($"SitePornhub-GetImages(): **** Leaving early empty sceneID");
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): **** Leaving early empty sceneID");
                 return result;
             }
 
@@ -252,7 +260,7 @@ namespace PhoenixAdult.Sites
             var imageUrl = sceneData.SelectSingleText("//div[@id='player']//img/@src");
             if (!string.IsNullOrEmpty(imageUrl))
             {
-                Logger.Debug($"SitePornhub-GetImages(): Processing image");
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
 
                 result.Add(new RemoteImageInfo
                 {
@@ -266,7 +274,7 @@ namespace PhoenixAdult.Sites
                 });
             }
 
-            Logger.Debug($"SitePornhub-GetImages(): **** Leaving - Found {result.Count} images");
+            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): **** Leaving - Found {result.Count} images");
 
             return result;
         }

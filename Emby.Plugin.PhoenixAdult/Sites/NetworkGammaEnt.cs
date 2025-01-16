@@ -361,6 +361,11 @@ namespace PhoenixAdult.Sites
                     Url = imageURL,
                     Type = ImageType.Primary,
                 });
+                result.Add(new RemoteImageInfo
+                {
+                    Url = imageURL,
+                    Type = ImageType.Backdrop,
+                });
             }
 
             if (sceneData.ContainsKey("pictures"))

@@ -140,6 +140,11 @@ namespace PhoenixAdult.Sites
                     Url = img,
                     Type = ImageType.Primary,
                 });
+                result.Add(new RemoteImageInfo
+                {
+                    Url = img,
+                    Type = ImageType.Backdrop,
+                });
             }
 
             return result;

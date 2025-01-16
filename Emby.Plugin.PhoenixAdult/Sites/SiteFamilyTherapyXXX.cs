@@ -147,6 +147,11 @@ namespace PhoenixAdult.Sites
                 Url = sceneResult.ImageUrl,
                 Type = ImageType.Primary,
             });
+            result.Add(new RemoteImageInfo
+            {
+                Url = sceneResult.ImageUrl,
+                Type = ImageType.Backdrop,
+            });
 
             return result;
         }

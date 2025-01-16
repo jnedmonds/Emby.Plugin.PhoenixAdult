@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Net;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using MediaBrowser.Controller.Entities;
@@ -14,8 +16,10 @@ using PhoenixAdult.Helpers.Utils;
 
 namespace PhoenixAdult.Sites
 {
-    public class SiteTonightsGirlfriend : IProviderBase
+    public class SiteTSPlayground : IProviderBase
     {
+        private static Regex posterUrlRegex = new Regex(@"<(.*?)>");
+
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
             var result = new List<RemoteSearchResult>();
@@ -24,16 +28,24 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
-            searchTitle = searchTitle.Replace(" ", "+", StringComparison.OrdinalIgnoreCase);
-            var url = Helper.GetSearchSearchURL(siteNum) + searchTitle;
-            var data = await HTML.ElementFromURL(url, cancellationToken).ConfigureAwait(false);
+            var searchResultsURLs = new List<string>();
 
-            var searchResults = data.SelectNodesSafe("//div[@class='scene-thumbnail']/a");
-            foreach (var searchResult in searchResults)
+            var urlEncodedSearchTitle = searchTitle.Replace(" ", "-", StringComparison.OrdinalIgnoreCase);
+            var url = Helper.GetSearchSearchURL(siteNum) + urlEncodedSearchTitle;
+            Logger.Info($"Searching for scene: {url}");
+            var data = await HTML.ElementFromURL(url, cancellationToken, additionalSuccessStatusCodes: HttpStatusCode.Redirect).ConfigureAwait(false);
+            var siteResults = data.SelectNodesSafe("//div[contains(@class, 'inner-col')]//a[./span[@class='item-name']]");
+
+            foreach (var searchResult in siteResults)
             {
                 var sceneURL = searchResult.Attributes["href"].Value;
+                Logger.Info($"Possible result {sceneURL}");
+                searchResultsURLs.Add(sceneURL);
+            }
 
-                var sceneID = new List<string> { Helper.Encode(sceneURL) };
+            foreach (var searchResult in searchResultsURLs)
+            {
+                var sceneID = new List<string> { Helper.Encode(searchResult) };
 
                 if (searchDate.HasValue)
                 {
@@ -69,55 +81,38 @@ namespace PhoenixAdult.Sites
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
             }
 
-            var sceneDate = string.Empty;
-            if (sceneID.Length > 1)
-            {
-                sceneDate = sceneID[1];
-            }
-
             result.Item.ExternalId = sceneURL;
-            result.Item.AddStudio("Tonight's Girlfriend");
+            result.Item.AddStudio("TS Playground");
 
-            var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
+            Logger.Info($"Loading scene {sceneURL}");
+            var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken, additionalSuccessStatusCodes: HttpStatusCode.Redirect).ConfigureAwait(false);
 
-            var title = sceneData.SelectSingleText("//div[@id='content']//h1");
+            var title = sceneData.SelectSingleText("//aside[contains(@class, 'content-aside-col')]/div[@class='content-title']/h1");
             result.Item.Name = title;
 
-            if (string.IsNullOrEmpty(sceneDate))
-            {
-                // get date from MetadataApi
-                var metadataApiProvider = Helper.GetMetadataAPIProvider();
-                var searchResults = await metadataApiProvider.Search(new int[] { 48, 0 }, title, null, cancellationToken);
+            var dateString = sceneData.SelectSingleText("//aside[contains(@class, 'content-aside-col')]//div[@class='content-date']/div");
 
-                result.Item.PremiereDate = searchResults[0].PremiereDate;
-            }
-            else
+            // example: 'Date: 09.01.2024'
+            dateString = dateString.Substring(6); // remove 'Date: '
+            if (DateTime.TryParseExact(dateString, "dd.MM.yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
             {
-                result.Item.PremiereDate = DateTime.Parse(sceneDate);
+                result.Item.PremiereDate = sceneDateObj;
             }
-
-            var genreNodes = sceneData.SelectNodesSafe("//div[@class='scenepage-info']//div[@class='category desktop-only']/a");
-            foreach (var genreNode in genreNodes)
-            {
-                result.Item.AddGenre(genreNode.InnerText.Trim());
-            }
-
-            var description = sceneData.SelectSingleText("//div[@class='scenepage-info']//p[@class='scene-description']").Trim();
-            result.Item.Overview = description;
 
             // performers
-            var performers = sceneData.SelectNodesSafe("//div[@id='content']//p[@class='grey-performers']/a");
+            var performers = sceneData.SelectNodesSafe("//aside[contains(@class, 'content-aside-col')]//div[@class='content-models']/a");
 
             foreach (var performer in performers)
             {
                 var performerURL = performer.Attributes["href"].Value;
                 Logger.Info($"Loading performer page: {performerURL}");
-                var performerData = await HTML.ElementFromURL(performerURL, cancellationToken).ConfigureAwait(false);
-                var performerImage = performerData.SelectSingleNode("//div[@class='performer-details']/img");
+                var performerData = await HTML.ElementFromURL(performerURL, cancellationToken, additionalSuccessStatusCodes: HttpStatusCode.Redirect).ConfigureAwait(false);
+                var performerImage = performerData.SelectSingleNode("//div[@class='model-avatar']/img");
+                var performerName = performerData.SelectSingleText("//h1");
                 result.AddPerson(new PersonInfo
                 {
-                    Name = performer.InnerText,
-                    ImageUrl = "https:" + performerImage.Attributes["src"].Value,
+                    Name = performerName,
+                    ImageUrl = performerImage.Attributes["src"].Value,
                 });
             }
 
@@ -139,18 +134,21 @@ namespace PhoenixAdult.Sites
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
             }
 
-            var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
+            Logger.Info($"Loading scene for images {sceneURL}");
+            var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken, additionalSuccessStatusCodes: HttpStatusCode.Redirect).ConfigureAwait(false);
 
-            var poster = sceneData.SelectSingleNode("//div[@class='scenepage-video']//picture//img[@class='playcard']");
+            var poster = sceneData.SelectSingleNode("//div[@class='fluid_pseudo_poster']");
+            var posterStyle = poster.Attributes["style"].Value;
+            var posterUrl = posterUrlRegex.Match(posterStyle).Groups[1].Value;
 
             result.Add(new RemoteImageInfo
             {
-                Url = "https:" + poster.Attributes["src"].Value,
+                Url = posterUrl,
                 Type = ImageType.Primary,
             });
             result.Add(new RemoteImageInfo
             {
-                Url = "https:" + poster.Attributes["src"].Value,
+                Url = posterUrl,
                 Type = ImageType.Backdrop,
             });
 

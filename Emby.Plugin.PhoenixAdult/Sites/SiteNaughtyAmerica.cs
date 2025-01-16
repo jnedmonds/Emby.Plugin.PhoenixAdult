@@ -25,28 +25,28 @@ namespace PhoenixAdult.Sites
     {
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
-            Logger.Debug($"SiteNaughtyAmerica-Search(): **** Starting with searchTitle: {searchTitle}");
+            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): ***** Starting - searchTitle: {searchTitle}");
 
             var result = new List<RemoteSearchResult>();
             if (siteNum == null || string.IsNullOrEmpty(searchTitle))
             {
-                Logger.Debug($"SiteNaughtyAmerica-Search(): **** Leaving early empty search title");
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): ***** Leaving early empty search title");
                 return result;
             }
 
-            Logger.Debug($"SiteNaughtyAmerica-Search(): Searching for results");
+            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Searching for results");
 
             var searchURL = Helper.GetSearchSearchURL(siteNum) + searchTitle;
             var searchData = await HTML.ElementFromURL(searchURL, cancellationToken).ConfigureAwait(false);
 
             var searchResultNodes = searchData.SelectNodesSafe("//div[@class='scene-grid-item']/a[@class='contain-img']");
 
-            Logger.Debug($"SiteNaughtyAmerica-Search(): Found results {searchResultNodes.Count} now processing");
+            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found results {searchResultNodes.Count} now processing");
 
             foreach (var nodsearchResultNode in searchResultNodes)
             {
                 var sceneUrl = nodsearchResultNode.Attributes["href"].Value;
-                Logger.Debug($"SiteNaughtyAmerica-Search(): Processing {sceneUrl}");
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing {sceneUrl}");
 
                 var sceneID = new List<string> { Helper.Encode(sceneUrl) };
 
@@ -58,19 +58,19 @@ namespace PhoenixAdult.Sites
                 var searchResult = await Helper.GetSearchResultsFromUpdate(this, siteNum, sceneID.ToArray(), searchDate, cancellationToken).ConfigureAwait(false);
                 if (searchResult.Any())
                 {
-                    Logger.Debug($"SiteNaughtyAmerica-Search(): Found title: {searchResult[0].Name}");
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found title: {searchResult[0].Name}");
                     result.AddRange(searchResult);
                 }
             }
 
-            Logger.Debug($"SiteNaughtyAmerica-Search(): **** Leaving - Search results: Found {result.Count} results for searchTitle: {searchTitle}");
+            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): **** Leaving - Search results: Found {result.Count} results for searchTitle: {searchTitle}");
 
             return result;
         }
 
         public async Task<MetadataResult<BaseItem>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
         {
-            Logger.Debug($"SiteNaughtyAmerica-Update(): **** Starting");
+            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): **** Starting");
 
             var result = new MetadataResult<BaseItem>()
             {
@@ -80,7 +80,7 @@ namespace PhoenixAdult.Sites
 
             if (sceneID == null)
             {
-                Logger.Debug($"SiteNaughtyAmerica-Update(): Leaving early empty sceneID");
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Leaving early empty sceneID");
                 return result;
             }
 
@@ -90,7 +90,7 @@ namespace PhoenixAdult.Sites
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
             }
 
-            Logger.Info($"SiteNaughtyAmerica-Update(): Loading scene: {sceneURL}");
+            Logger.Info($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Loading scene: {sceneURL}");
 
             var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
 
@@ -98,46 +98,12 @@ namespace PhoenixAdult.Sites
 
             if (Plugin.Instance.Configuration.EnableDebugging)
             {
-                Logger.Debug($"SiteNaughtyAmerica-Update(): externalID: {result.Item.ExternalId}");
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): externalID: {result.Item.ExternalId}");
             }
 
             result.Item.Name = sceneData.SelectSingleText("//div[@class='scene-info']/h1");
 
-            Logger.Debug($"SiteNaughtyAmerica-Update(): title: {result.Item.Name}");
-
-            result.Item.AddStudio("Naughty America");
-
-            if (Plugin.Instance.Configuration.EnableDebugging)
-            {
-                Logger.Debug($"SiteNaughtyAmerica-Update(): studio: Naughty America");
-            }
-
-            var subSites = sceneData.SelectNodesSafe("//div[@class='scene-info']//h2/a");
-            foreach (var subSite in subSites)
-            {
-                if (Plugin.Instance.Configuration.EnableDebugging)
-                {
-                    Logger.Debug($"SiteNaughtyAmerica-Update(): sub-studio: {subSite.InnerText}");
-                }
-
-                result.Item.AddStudio(subSite.InnerText);
-            }
-
-            if (Plugin.Instance.Configuration.EnableDebugging)
-            {
-                Logger.Debug($"SiteNaughtyAmerica-Update(): Finding Premier date");
-            }
-
-            var date = sceneData.SelectSingleText("//span[contains(@class, 'entry-date')]/text()");
-            if (DateTime.TryParseExact(date, "MMM d, yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
-            {
-                if (Plugin.Instance.Configuration.EnableDebugging)
-                {
-                    Logger.Debug($"SiteNaughtyAmerica-Update(): Premier date added {sceneDateObj.ToString()}");
-                }
-
-                result.Item.PremiereDate = sceneDateObj;
-            }
+            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): title: {result.Item.Name}");
 
             string tmpOverview = sceneData.SelectSingleText("//div[contains(@class, 'synopsis')]");
             if (!string.IsNullOrEmpty(tmpOverview))
@@ -147,9 +113,46 @@ namespace PhoenixAdult.Sites
 
             if (Plugin.Instance.Configuration.EnableDebugging)
             {
-                Logger.Debug($"SiteNaughtyAmerica-Update(): overview: {result.Item.Overview}");
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): overview: {result.Item.Overview}");
+            }
 
-                Logger.Debug($"SiteNaughtyAmerica-Update(): Processing Genres");
+            result.Item.AddStudio("Naughty America");
+
+            if (Plugin.Instance.Configuration.EnableDebugging)
+            {
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): studio: Naughty America");
+            }
+
+            var subSites = sceneData.SelectNodesSafe("//div[@class='scene-info']//h2/a");
+            foreach (var subSite in subSites)
+            {
+                if (Plugin.Instance.Configuration.EnableDebugging)
+                {
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): sub-studio: {subSite.InnerText}");
+                }
+
+                result.Item.AddStudio(subSite.InnerText);
+            }
+
+            if (Plugin.Instance.Configuration.EnableDebugging)
+            {
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Finding Premier date");
+            }
+
+            var date = sceneData.SelectSingleText("//span[contains(@class, 'entry-date')]/text()");
+            if (DateTime.TryParseExact(date, "MMM d, yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
+            {
+                if (Plugin.Instance.Configuration.EnableDebugging)
+                {
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Premier date added {sceneDateObj.ToString()}");
+                }
+
+                result.Item.PremiereDate = sceneDateObj;
+            }
+
+            if (Plugin.Instance.Configuration.EnableDebugging)
+            {
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing Genres");
             }
 
             var genreNode = sceneData.SelectNodesSafe("//div[contains(@class, 'categories')]/a");
@@ -157,7 +160,7 @@ namespace PhoenixAdult.Sites
             {
                 if (Plugin.Instance.Configuration.EnableDebugging)
                 {
-                    Logger.Debug($"SiteNaughtyAmerica-Update(): Found genre: {genreLink.InnerText}");
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found genre: {genreLink.InnerText}");
                 }
 
                 result.Item.AddGenre(genreLink.InnerText);
@@ -165,7 +168,7 @@ namespace PhoenixAdult.Sites
 
             if (Plugin.Instance.Configuration.EnableDebugging)
             {
-                Logger.Debug($"SiteNaughtyAmerica-Update(): Processing Actors");
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing Actors");
             }
 
             var actorsNode = sceneData.SelectNodesSafe("//div[@class='performer-list']/a");
@@ -181,7 +184,7 @@ namespace PhoenixAdult.Sites
 
                 if (Plugin.Instance.Configuration.EnableDebugging)
                 {
-                    Logger.Debug($"SiteNaughtyAmerica-Update(): Found actor: {actorName}");
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found actor: {actorName}");
                 }
 
                 var res = new PersonInfo
@@ -195,27 +198,27 @@ namespace PhoenixAdult.Sites
 
                     if (Plugin.Instance.Configuration.EnableDebugging)
                     {
-                        Logger.Debug($"SiteNaughtyAmerica-Update(): Found actor photoURL: {res.ImageUrl.ToString()}");
+                        Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found actor photoURL: {res.ImageUrl.ToString()}");
                     }
                 }
 
                 result.People.Add(res);
             }
 
-            Logger.Debug($"SiteNaughtyAmerica-Update(): **** Leaving - Updated title: {result.Item.Name}");
+            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): **** Leaving - Updated title: {result.Item.Name}");
 
             return result;
         }
 
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
-            Logger.Debug($"SiteNaughtyAmerica-GetImages(): **** Starting");
+            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): **** Starting");
 
             var result = new List<RemoteImageInfo>();
 
             if (sceneID == null)
             {
-                Logger.Debug($"SiteNaughtyAmerica-GetImages(): Leaving early empty sceneID");
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Leaving early empty sceneID");
                 return result;
             }
 
@@ -230,7 +233,7 @@ namespace PhoenixAdult.Sites
             var galleryImages = sceneData.SelectNodesSafe("//div[@class='contain-scene-images desktop-only']/a");
             foreach (var image in galleryImages)
             {
-                Logger.Debug($"SiteNaughtyAmerica-GetImages(): Processing image");
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
 
                 var imageUrl = "https:" + image.Attributes["href"].Value;
 
@@ -246,7 +249,7 @@ namespace PhoenixAdult.Sites
                 });
             }
 
-            Logger.Debug($"SiteNaughtyAmerica-GetImages(): **** Leaving - Found {result.Count} images");
+            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): **** Leaving - Found {result.Count} images");
 
             return result;
         }

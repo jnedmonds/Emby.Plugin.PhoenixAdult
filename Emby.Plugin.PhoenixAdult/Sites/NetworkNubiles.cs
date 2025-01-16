@@ -195,6 +195,7 @@ namespace PhoenixAdult.Sites
             }
 
             var sceneURL = Helper.Decode(sceneID[0]);
+            Logger.Debug($"SceneURL: {sceneURL}");
             if (!sceneURL.StartsWith("http", StringComparison.OrdinalIgnoreCase))
             {
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;

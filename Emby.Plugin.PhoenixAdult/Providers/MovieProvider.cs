@@ -150,6 +150,10 @@ namespace PhoenixAdult.Providers
                     }
                 }
             }
+            else
+            {
+                Logger.Error($"Failed to find provider for site {site.siteNum[0]}:{site.siteNum[1]}");
+            }
 
             return result;
         }

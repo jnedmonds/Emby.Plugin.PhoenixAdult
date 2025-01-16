@@ -149,7 +149,11 @@ namespace PhoenixAdult.Sites
                 Url = posterNode.Attributes["src"].Value,
                 Type = ImageType.Primary,
             });
-
+            result.Add(new RemoteImageInfo
+            {
+                Url = posterNode.Attributes["src"].Value,
+                Type = ImageType.Backdrop,
+            });
             return result;
         }
     }

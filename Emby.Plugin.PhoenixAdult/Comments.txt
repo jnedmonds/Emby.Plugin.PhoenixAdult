@@ -1,0 +1,107 @@
+*******************************************************************************************************************************************************************************
+Search
+*******************************************************************************************************************************************************************************
+
+Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): ***** Starting - searchTitle: {searchTitle}");
+
+Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): ***** Leaving early empty search title");
+
+Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Searching for results");
+
+Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found results {searchResultNodes.Count} now processing");
+
+Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing {sceneUrl}");
+
+Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found title: {searchResult[0].Name}");
+
+Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): **** Leaving - Search results: Found {result.Count} results for searchTitle: {searchTitle}");
+
+*******************************************************************************************************************************************************************************
+
+
+*******************************************************************************************************************************************************************************
+Update
+*******************************************************************************************************************************************************************************
+
+Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): **** Starting");
+
+Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Leaving early empty sceneID");
+
+Logger.Info($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Loading scene: {sceneURL}");
+
+if (Plugin.Instance.Configuration.EnableDebugging)
+{
+	Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): externalID: {result.Item.ExternalId}");
+}
+
+Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): title: {result.Item.Name}");
+
+if (Plugin.Instance.Configuration.EnableDebugging)
+{
+	Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): overview: {result.Item.Overview}");
+}
+
+if (Plugin.Instance.Configuration.EnableDebugging)
+{
+	Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): studio: Naughty America");
+}
+
+if (Plugin.Instance.Configuration.EnableDebugging)
+{
+	Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): sub-studio: {subSite.InnerText}");
+}
+
+if (Plugin.Instance.Configuration.EnableDebugging)
+{
+	Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Finding Premier date");
+}
+
+if (Plugin.Instance.Configuration.EnableDebugging)
+{
+	Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Premier date added {sceneDateObj.ToString()}");
+}
+
+
+if (Plugin.Instance.Configuration.EnableDebugging)
+{
+	Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing Genres");
+}
+
+if (Plugin.Instance.Configuration.EnableDebugging)
+{
+	Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found genre: {genreLink.InnerText}");
+}
+
+if (Plugin.Instance.Configuration.EnableDebugging)
+{
+	Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing Actors");
+}
+
+if (Plugin.Instance.Configuration.EnableDebugging)
+{
+	Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found actor: {actorName}");
+}
+
+if (Plugin.Instance.Configuration.EnableDebugging)
+{
+	Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found actor photoURL: {res.ImageUrl.ToString()}");
+}
+
+Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): **** Leaving - Updated title: {result.Item.Name}");
+
+*******************************************************************************************************************************************************************************
+
+
+*******************************************************************************************************************************************************************************
+GetImages
+*******************************************************************************************************************************************************************************
+
+Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): **** Starting");
+
+Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Leaving early empty sceneID");
+
+Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+
+Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): **** Leaving - Found {result.Count} images");
+
+*******************************************************************************************************************************************************************************
