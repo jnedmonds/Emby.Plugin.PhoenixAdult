@@ -46,7 +46,9 @@ namespace PhoenixAdult.Sites
             foreach (var nodsearchResultNode in searchResultNodes)
             {
                 var sceneUrl = nodsearchResultNode.Attributes["href"].Value;
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing {sceneUrl}");
+                var dataSceneID = nodsearchResultNode.Attributes["data-scene-id"].Value ?? string.Empty;
+
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing {sceneUrl} - dataSceneID {dataSceneID}");
 
                 var sceneID = new List<string> { Helper.Encode(sceneUrl) };
 
@@ -60,6 +62,12 @@ namespace PhoenixAdult.Sites
                 {
                     Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found title: {searchResult[0].Name}");
                     result.AddRange(searchResult);
+
+                    if (searchResult[0].Name.Equals(searchTitle, StringComparison.OrdinalIgnoreCase))
+                    {
+                        Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found exact match");
+                        break;
+                    }
                 }
             }
 
