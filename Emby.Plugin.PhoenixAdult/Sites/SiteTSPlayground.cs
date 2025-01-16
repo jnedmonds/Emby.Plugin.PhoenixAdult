@@ -33,7 +33,7 @@ namespace PhoenixAdult.Sites
             var urlEncodedSearchTitle = searchTitle.Replace(" ", "-", StringComparison.OrdinalIgnoreCase);
             var url = Helper.GetSearchSearchURL(siteNum) + urlEncodedSearchTitle;
             Logger.Info($"Searching for scene: {url}");
-            var data = await HTML.ElementFromURL(url, cancellationToken, additionalSuccessStatusCodes: HttpStatusCode.Redirect).ConfigureAwait(false);
+            var data = await HTML.ElementFromURL(url, cancellationToken).ConfigureAwait(false);
             var siteResults = data.SelectNodesSafe("//div[contains(@class, 'inner-col')]//a[./span[@class='item-name']]");
 
             foreach (var searchResult in siteResults)
@@ -85,7 +85,7 @@ namespace PhoenixAdult.Sites
             result.Item.AddStudio("TS Playground");
 
             Logger.Info($"Loading scene {sceneURL}");
-            var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken, additionalSuccessStatusCodes: HttpStatusCode.Redirect).ConfigureAwait(false);
+            var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
 
             var title = sceneData.SelectSingleText("//aside[contains(@class, 'content-aside-col')]/div[@class='content-title']/h1");
             result.Item.Name = title;
@@ -106,7 +106,7 @@ namespace PhoenixAdult.Sites
             {
                 var performerURL = performer.Attributes["href"].Value;
                 Logger.Info($"Loading performer page: {performerURL}");
-                var performerData = await HTML.ElementFromURL(performerURL, cancellationToken, additionalSuccessStatusCodes: HttpStatusCode.Redirect).ConfigureAwait(false);
+                var performerData = await HTML.ElementFromURL(performerURL, cancellationToken).ConfigureAwait(false);
                 var performerImage = performerData.SelectSingleNode("//div[@class='model-avatar']/img");
                 var performerName = performerData.SelectSingleText("//h1");
                 result.AddPerson(new PersonInfo
@@ -135,7 +135,7 @@ namespace PhoenixAdult.Sites
             }
 
             Logger.Info($"Loading scene for images {sceneURL}");
-            var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken, additionalSuccessStatusCodes: HttpStatusCode.Redirect).ConfigureAwait(false);
+            var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
 
             var poster = sceneData.SelectSingleNode("//div[@class='fluid_pseudo_poster']");
             var posterStyle = poster.Attributes["style"].Value;

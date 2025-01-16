@@ -87,10 +87,6 @@ namespace PhoenixAdult.Sites
             {
                 json = JObject.Parse(http.Content);
             }
-            else
-            {
-                Logger.Error($"Failed to get data ({http.StatusCode}): {http.Content}");
-            }
 
             return json;
         }

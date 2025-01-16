@@ -60,10 +60,6 @@ namespace PhoenixAdult.Sites
                 {
                     json = (JObject)JObject.Parse(regEx.Groups[1].Value)["content"];
                 }
-                else
-                {
-                    Logger.Error($"Failed to load page {url} ({http.StatusCode})");
-                }
             }
 
             return json;

@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.IO;
-using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,17 +9,13 @@ namespace PhoenixAdult.Helpers.Utils
 {
     internal static class HTML
     {
-        public static async Task<HtmlNode> ElementFromURL(string url, CancellationToken cancellationToken, IDictionary<string, string> headers = null, IDictionary<string, string> cookies = null, params HttpStatusCode[] additionalSuccessStatusCodes)
+        public static async Task<HtmlNode> ElementFromURL(string url, CancellationToken cancellationToken, IDictionary<string, string> headers = null, IDictionary<string, string> cookies = null)
         {
             var html = new HtmlDocument().DocumentNode;
-            var http = await HTTP.Request(url, cancellationToken, headers, cookies, additionalSuccessStatusCodes).ConfigureAwait(false);
+            var http = await HTTP.Request(url, cancellationToken, headers, cookies).ConfigureAwait(false);
             if (http.IsOK)
             {
                 html = ElementFromStream(http.ContentStream);
-            }
-            else
-            {
-                Logger.Error($"Error loading {url} ({http.StatusCode})");
             }
 
             return html;
