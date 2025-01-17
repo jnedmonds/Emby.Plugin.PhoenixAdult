@@ -238,7 +238,10 @@ namespace PhoenixAdult.Sites
             var galleryImages = sceneData.SelectNodesSafe("//div[@class='contain-scene-images desktop-only']/a");
             foreach (var image in galleryImages)
             {
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                if (Plugin.Instance.Configuration.EnableDebugging)
+                {
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                }
 
                 var imageUrl = "https:" + image.Attributes["href"].Value;
 

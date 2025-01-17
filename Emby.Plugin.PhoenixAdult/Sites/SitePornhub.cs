@@ -256,7 +256,10 @@ namespace PhoenixAdult.Sites
             var imageUrl = sceneData.SelectSingleText("//div[@id='player']//img/@src");
             if (!string.IsNullOrEmpty(imageUrl))
             {
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                if (Plugin.Instance.Configuration.EnableDebugging)
+                {
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                }
 
                 result.Add(new RemoteImageInfo
                 {

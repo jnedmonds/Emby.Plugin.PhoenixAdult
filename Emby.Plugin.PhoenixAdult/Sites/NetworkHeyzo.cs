@@ -229,7 +229,10 @@ namespace PhoenixAdult.Sites
             var movieID = sceneURL.Replace("/index.html", string.Empty, StringComparison.OrdinalIgnoreCase).Split("/").Last();
             if (!string.IsNullOrEmpty(movieID) && int.TryParse(movieID, out _))
             {
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                if (Plugin.Instance.Configuration.EnableDebugging)
+                {
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                }
 
                 result.Add(new RemoteImageInfo
                 {
@@ -240,7 +243,10 @@ namespace PhoenixAdult.Sites
 
             for (var i = 0; i <= 21; i++)
             {
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                if (Plugin.Instance.Configuration.EnableDebugging)
+                {
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                }
 
                 string index = i.ToString(CultureInfo.InvariantCulture).PadLeft(3, '0'),
                     img = $"https://en.heyzo.com/contents/3000/{movieID}/gallery/{index}.jpg";

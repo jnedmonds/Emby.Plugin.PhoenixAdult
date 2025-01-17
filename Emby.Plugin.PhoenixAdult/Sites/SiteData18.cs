@@ -257,7 +257,11 @@ namespace PhoenixAdult.Sites
 
             foreach (var node in sceneData.SelectNodesSafe("//a[@data-featherlight='image']"))
             {
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                if (Plugin.Instance.Configuration.EnableDebugging)
+                {
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                }
+
                 var img = node.SelectSingleText("./@href");
 
                 result.Add(new RemoteImageInfo

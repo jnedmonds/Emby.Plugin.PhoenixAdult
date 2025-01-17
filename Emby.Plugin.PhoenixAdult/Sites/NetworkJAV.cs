@@ -98,7 +98,10 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
-            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+            if (Plugin.Instance.Configuration.EnableDebugging)
+            {
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+            }
 
             var provider = new MovieImageProvider();
             var info = new Movie();

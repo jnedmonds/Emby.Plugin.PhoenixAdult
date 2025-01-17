@@ -222,7 +222,10 @@ namespace PhoenixAdult.Sites
 
             Logger.Info($"Loading scene for images {sceneURL}");
             var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
-            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+            if (Plugin.Instance.Configuration.EnableDebugging)
+            {
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+            }
 
             var video = sceneData.SelectSingleNode("//video[@id='main-player']");
             result.Add(new RemoteImageInfo
@@ -239,7 +242,10 @@ namespace PhoenixAdult.Sites
             var extraImages = sceneData.SelectNodesSafe("//div[contains(@class, 'photos-slider')]//img");
             foreach (var extraImage in extraImages)
             {
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing scene image");
+                if (Plugin.Instance.Configuration.EnableDebugging)
+                {
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                }
 
                 result.Add(new RemoteImageInfo
                 {

@@ -237,7 +237,10 @@ namespace PhoenixAdult.Sites
             var poster = sceneData.SelectSingleText("//a[@id='front-cover']/@data-href");
             if (!string.IsNullOrEmpty(poster))
             {
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing poster");
+                if (Plugin.Instance.Configuration.EnableDebugging)
+                {
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                }
 
                 result.Add(new RemoteImageInfo
                 {
@@ -249,7 +252,10 @@ namespace PhoenixAdult.Sites
             var sceneImages = sceneData.SelectNodesSafe("//a[@rel='scenescreenshots']");
             foreach (var sceneImage in sceneImages)
             {
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing sceneImage");
+                if (Plugin.Instance.Configuration.EnableDebugging)
+                {
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                }
 
                 result.Add(new RemoteImageInfo
                 {

@@ -207,7 +207,10 @@ namespace PhoenixAdult.Sites
             // unable to get video poster from scene page, so performing search to get that poster
             var searchResults = await this.Search(siteNum, sceneName, null, cancellationToken).ConfigureAwait(false);
             var sceneResult = searchResults.First(x => x.Name == sceneName);
-            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+            if (Plugin.Instance.Configuration.EnableDebugging)
+            {
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+            }
 
             result.Add(new RemoteImageInfo
             {

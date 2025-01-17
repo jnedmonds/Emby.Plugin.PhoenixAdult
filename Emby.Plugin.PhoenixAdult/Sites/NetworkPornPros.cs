@@ -275,7 +275,10 @@ namespace PhoenixAdult.Sites
             var img = sceneData.SelectSingleText("//video[@id='player']/@poster");
             if (!string.IsNullOrEmpty(img))
             {
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                if (Plugin.Instance.Configuration.EnableDebugging)
+                {
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                }
 
                 if (!img.StartsWith("http", StringComparison.OrdinalIgnoreCase))
                 {
@@ -297,7 +300,10 @@ namespace PhoenixAdult.Sites
             var gallery = sceneData.SelectNodesSafe("//div[@id='trailer_player']//div[@class='hidden w-full lg:flex flex-row mt-2']/a/img");
             foreach (var image in gallery)
             {
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing gallery image");
+                if (Plugin.Instance.Configuration.EnableDebugging)
+                {
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                }
 
                 var url = image.Attributes["src"].Value;
                 var uri = new Uri(url);

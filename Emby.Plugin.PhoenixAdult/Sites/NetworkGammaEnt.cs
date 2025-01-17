@@ -423,7 +423,10 @@ namespace PhoenixAdult.Sites
 
             if (!ignore)
             {
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                if (Plugin.Instance.Configuration.EnableDebugging)
+                {
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                }
 
                 image = (sceneData.ContainsKey("url_movie_title") ? sceneData["url_movie_title"] : sceneData["url_title"]).ToString().ToLowerInvariant().Replace('-', '_');
                 imageURL = $"https://images-fame.gammacdn.com/movies/{sceneData["movie_id"]}/{sceneData["movie_id"]}_{image}_front_400x625.jpg";
@@ -442,7 +445,10 @@ namespace PhoenixAdult.Sites
 
             if (sceneData.ContainsKey("pictures"))
             {
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                if (Plugin.Instance.Configuration.EnableDebugging)
+                {
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                }
 
                 image = (string)sceneData["pictures"].Last(o => !o.ToString().Equals("resized", StringComparison.OrdinalIgnoreCase));
                 imageURL = $"https://images-fame.gammacdn.com/movies/{image}";

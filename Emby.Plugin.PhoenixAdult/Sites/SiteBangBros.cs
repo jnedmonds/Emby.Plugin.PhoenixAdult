@@ -215,7 +215,11 @@ namespace PhoenixAdult.Sites
             var imgNode = sceneData.SelectNodesSafe("//img[contains(@id, 'player-overlay-image')]");
             foreach (var sceneImages in imgNode)
             {
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                if (Plugin.Instance.Configuration.EnableDebugging)
+                {
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                }
+
                 result.Add(new RemoteImageInfo
                 {
                     Url = $"https:{sceneImages.Attributes["src"].Value}",
@@ -226,7 +230,11 @@ namespace PhoenixAdult.Sites
             imgNode = sceneData.SelectNodesSafe("//div[@id='img-slider']//img");
             foreach (var sceneImages in imgNode)
             {
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing scene image");
+                if (Plugin.Instance.Configuration.EnableDebugging)
+                {
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                }
+
                 result.Add(new RemoteImageInfo
                 {
                     Url = $"https:{sceneImages.Attributes["src"].Value}",

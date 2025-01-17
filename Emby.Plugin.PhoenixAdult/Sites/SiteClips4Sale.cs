@@ -194,7 +194,11 @@ namespace PhoenixAdult.Sites
             var img = GetPosterUrl(studioId, sceneId);
             if (!string.IsNullOrEmpty(img))
             {
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                if (Plugin.Instance.Configuration.EnableDebugging)
+                {
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                }
+
                 result.Add(new RemoteImageInfo
                 {
                     Url = img,

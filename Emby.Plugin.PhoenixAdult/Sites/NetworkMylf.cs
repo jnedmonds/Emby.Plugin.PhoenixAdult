@@ -375,7 +375,10 @@ namespace PhoenixAdult.Sites
             var sceneName = sceneData.Properties().First().Name;
             sceneData = (JObject)sceneData[sceneName];
 
-            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+            if (Plugin.Instance.Configuration.EnableDebugging)
+            {
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+            }
 
             var img = (string)sceneData["img"];
             result.Add(new RemoteImageInfo

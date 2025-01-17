@@ -234,7 +234,10 @@ namespace PhoenixAdult.Sites
             var image = sceneData.SelectSingleText("//a[@class='fake_trailer']//img/@src0_1x");
             if (!string.IsNullOrEmpty(image))
             {
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                if (Plugin.Instance.Configuration.EnableDebugging)
+                {
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                }
 
                 if (!image.StartsWith("http", StringComparison.OrdinalIgnoreCase))
                 {

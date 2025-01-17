@@ -220,7 +220,11 @@ namespace PhoenixAdult.Sites
             var posterNode = sceneData.SelectSingleNode("//section[@class='section-intro']//div[@class='feature-image']//img");
             if (posterNode != null)
             {
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                if (Plugin.Instance.Configuration.EnableDebugging)
+                {
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                }
+
                 result.Add(new RemoteImageInfo
                 {
                     Url = posterNode.Attributes["src"].Value,
@@ -234,7 +238,11 @@ namespace PhoenixAdult.Sites
             }
             else
             {
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                if (Plugin.Instance.Configuration.EnableDebugging)
+                {
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                }
+
                 posterNode = sceneData.SelectSingleNode("//section[@class='section-intro']//div[@class='feature-image']//div[contains(@class, 'video-player-container')]");
                 var posterUrl = posterNode.Attributes["data-poster"].Value;
                 posterUrl = posterUrl.Replace("&amp;", "&");
@@ -254,7 +262,11 @@ namespace PhoenixAdult.Sites
             var galleryImages = sceneData.SelectNodesSafe("//section[contains(@class, 'section-images')]//div[contains(@class, 'tile-image')]/img");
             foreach (var image in galleryImages)
             {
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                if (Plugin.Instance.Configuration.EnableDebugging)
+                {
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                }
+
                 result.Add(new RemoteImageInfo
                 {
                     Url = image.Attributes["src"].Value,

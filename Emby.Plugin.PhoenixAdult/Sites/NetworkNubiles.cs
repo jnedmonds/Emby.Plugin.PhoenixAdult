@@ -250,7 +250,10 @@ namespace PhoenixAdult.Sites
             var poster = sceneData.SelectSingleText("//video/@poster");
             if (!string.IsNullOrEmpty(poster))
             {
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                if (Plugin.Instance.Configuration.EnableDebugging)
+                {
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                }
 
                 result.Add(new RemoteImageInfo
                 {
@@ -264,7 +267,10 @@ namespace PhoenixAdult.Sites
             var sceneImages = photoPage.SelectNodesSafe("//div[@class='img-wrapper']//source[1]");
             foreach (var sceneImage in sceneImages)
             {
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing scene image");
+                if (Plugin.Instance.Configuration.EnableDebugging)
+                {
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                }
 
                 var posterURL = sceneImage.Attributes["src"].Value;
 

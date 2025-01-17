@@ -239,7 +239,10 @@ namespace PhoenixAdult.Sites
 
             foreach (var image in video["carousel"])
             {
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                if (Plugin.Instance.Configuration.EnableDebugging)
+                {
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                }
 
                 var img = (string)image["listing"].First()["highdpi"]["triple"];
 

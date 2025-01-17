@@ -244,7 +244,10 @@ namespace PhoenixAdult.Sites
             }
 
             var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
-            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+            if (Plugin.Instance.Configuration.EnableDebugging)
+            {
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+            }
 
             var script = sceneData.SelectSingleText("//script[contains(text(), 'df_movie')]");
             if (!string.IsNullOrEmpty(script))
@@ -296,7 +299,10 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing scene image");
+            if (Plugin.Instance.Configuration.EnableDebugging)
+            {
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+            }
 
             var photoPageURL = sceneData.SelectSingleText("//div[contains(@class, 'content_tab')]/a[text()='Photos']/@href");
             var photoPage = await HTML.ElementFromURL(photoPageURL, cancellationToken).ConfigureAwait(false);

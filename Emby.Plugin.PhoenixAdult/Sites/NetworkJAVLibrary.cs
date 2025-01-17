@@ -258,7 +258,10 @@ namespace PhoenixAdult.Sites
             var img = sceneData.SelectSingleText("//img[@id='video_jacket_img']/@src");
             if (!string.IsNullOrEmpty(img))
             {
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                if (Plugin.Instance.Configuration.EnableDebugging)
+                {
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                }
 
                 if (!img.StartsWith("http", StringComparison.OrdinalIgnoreCase))
                 {
@@ -275,7 +278,10 @@ namespace PhoenixAdult.Sites
             var sceneImages = sceneData.SelectNodesSafe("//div[@class='previewthumbs']/img");
             foreach (var sceneImage in sceneImages)
             {
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing scene image");
+                if (Plugin.Instance.Configuration.EnableDebugging)
+                {
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                }
 
                 img = $"{sceneImage.Attributes["src"].Value.Replace("-", "jp-", StringComparison.OrdinalIgnoreCase)}";
                 if (!img.StartsWith("http", StringComparison.OrdinalIgnoreCase))

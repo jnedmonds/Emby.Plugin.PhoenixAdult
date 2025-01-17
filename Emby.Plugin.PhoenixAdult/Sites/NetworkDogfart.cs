@@ -236,7 +236,10 @@ namespace PhoenixAdult.Sites
             var poster = sceneData.SelectSingleText("//div[@class='icon-container']//img/@src");
             if (!string.IsNullOrEmpty(poster))
             {
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                if (Plugin.Instance.Configuration.EnableDebugging)
+                {
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                }
 
                 result.Add(new RemoteImageInfo
                 {
@@ -248,7 +251,10 @@ namespace PhoenixAdult.Sites
             var img = sceneData.SelectNodesSafe("//div[contains(@class, 'preview-image-container')]//a");
             foreach (var sceneImages in img)
             {
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing scene image");
+                if (Plugin.Instance.Configuration.EnableDebugging)
+                {
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                }
 
                 var url = Helper.GetSearchBaseURL(siteNum) + sceneImages.Attributes["href"].Value;
                 var posterHTML = await HTML.ElementFromURL(url, cancellationToken).ConfigureAwait(false);

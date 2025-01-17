@@ -251,7 +251,11 @@ namespace PhoenixAdult.Sites
                 if (!string.IsNullOrEmpty(actorPhoto))
                 {
                     actor.ImageUrl = actorPhoto;
-                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found actor photoURL: {actorPhoto}");
+
+                    if (Plugin.Instance.Configuration.EnableDebugging)
+                    {
+                        Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found actor photoURL: {actorPhoto}");
+                    }
                 }
 
                 result.People.Add(actor);
@@ -285,7 +289,10 @@ namespace PhoenixAdult.Sites
             var sceneImages = sceneData.SelectNodesSafe("//video");
             foreach (var sceneImage in sceneImages)
             {
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                if (Plugin.Instance.Configuration.EnableDebugging)
+                {
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                }
 
                 result.Add(new RemoteImageInfo
                 {
@@ -297,7 +304,10 @@ namespace PhoenixAdult.Sites
             sceneImages = sceneData.SelectNodesSafe("//div[@class='player']//img");
             foreach (var sceneImage in sceneImages)
             {
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing scene image");
+                if (Plugin.Instance.Configuration.EnableDebugging)
+                {
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                }
 
                 result.Add(new RemoteImageInfo
                 {
@@ -314,7 +324,10 @@ namespace PhoenixAdult.Sites
             sceneImages = sceneData.SelectNodesSafe("//div[@id='gallerySlider']//img");
             foreach (var sceneImage in sceneImages)
             {
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing scene image");
+                if (Plugin.Instance.Configuration.EnableDebugging)
+                {
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                }
 
                 result.Add(new RemoteImageInfo
                 {

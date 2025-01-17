@@ -341,7 +341,10 @@ namespace PhoenixAdult.Sites
             }
 
             var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
-            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+            if (Plugin.Instance.Configuration.EnableDebugging)
+            {
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+            }
 
             var posterNode = sceneData.SelectSingleNode("//span[@id='trailer_thumb']//span//img");
             result.Add(new RemoteImageInfo

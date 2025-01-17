@@ -209,7 +209,10 @@ namespace PhoenixAdult.Sites
             var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
 
             var imagesRootNode = sceneData.SelectSingleNode("//div[@class='update_image']");
-            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+            if (Plugin.Instance.Configuration.EnableDebugging)
+            {
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+            }
 
             var poster = imagesRootNode.SelectSingleNode("./a[@class='featured']/img");
             result.Add(new RemoteImageInfo
@@ -226,7 +229,10 @@ namespace PhoenixAdult.Sites
             var extraImages = imagesRootNode.SelectNodesSafe("./div[@class='left']/a/img");
             foreach (var extraImage in extraImages)
             {
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing scene image");
+                if (Plugin.Instance.Configuration.EnableDebugging)
+                {
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                }
 
                 if (extraImage.Attributes.Contains("src0_2x"))
                 {

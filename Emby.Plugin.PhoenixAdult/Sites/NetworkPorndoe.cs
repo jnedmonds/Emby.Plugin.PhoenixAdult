@@ -227,7 +227,10 @@ namespace PhoenixAdult.Sites
 
             foreach (var xpath in xpaths)
             {
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                if (Plugin.Instance.Configuration.EnableDebugging)
+                {
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                }
 
                 var img = sceneData.SelectSingleText(xpath);
                 if (!string.IsNullOrEmpty(img))

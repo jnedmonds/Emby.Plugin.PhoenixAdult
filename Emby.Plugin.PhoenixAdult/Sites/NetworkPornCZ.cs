@@ -230,7 +230,10 @@ namespace PhoenixAdult.Sites
             var img = sceneData.SelectSingleText("//div[@id='video-poster']/@data-poster");
             if (!string.IsNullOrEmpty(img))
             {
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                if (Plugin.Instance.Configuration.EnableDebugging)
+                {
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                }
 
                 if (!img.StartsWith("http", StringComparison.OrdinalIgnoreCase))
                 {
@@ -247,7 +250,10 @@ namespace PhoenixAdult.Sites
             var sceneImages = sceneData.SelectNodesSafe("//div[@id='gallery']//img");
             foreach (var sceneImage in sceneImages)
             {
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing scene image");
+                if (Plugin.Instance.Configuration.EnableDebugging)
+                {
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                }
 
                 img = sceneImage.Attributes["data-src"].Value;
                 if (!img.StartsWith("http", StringComparison.OrdinalIgnoreCase))

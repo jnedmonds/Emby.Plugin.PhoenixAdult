@@ -185,7 +185,10 @@ namespace PhoenixAdult.Sites
 
             Logger.Info($"Loading scene for images {sceneURL}");
             var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
-            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+            if (Plugin.Instance.Configuration.EnableDebugging)
+            {
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+            }
 
             var poster = sceneData.SelectSingleNode("//div[@class='fluid_pseudo_poster']");
             var posterStyle = poster.Attributes["style"].Value;

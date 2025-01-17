@@ -222,7 +222,10 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
-            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing images");
+            if (Plugin.Instance.Configuration.EnableDebugging)
+            {
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+            }
 
             sceneData = (JObject)sceneData["hits"]["hits"].First["_source"];
             result.Add(new RemoteImageInfo
@@ -233,7 +236,10 @@ namespace PhoenixAdult.Sites
 
             foreach (var image in sceneData["screenshots"])
             {
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                if (Plugin.Instance.Configuration.EnableDebugging)
+                {
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                }
 
                 result.Add(new RemoteImageInfo
                 {
