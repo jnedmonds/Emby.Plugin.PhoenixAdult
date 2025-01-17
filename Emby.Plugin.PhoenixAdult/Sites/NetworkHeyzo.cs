@@ -19,11 +19,16 @@ namespace PhoenixAdult.Sites
     {
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
+            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): ***** Starting - searchTitle: {searchTitle}");
+
             var result = new List<RemoteSearchResult>();
             if (siteNum == null || string.IsNullOrEmpty(searchTitle))
             {
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): ***** Leaving early empty search title");
                 return result;
             }
+
+            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Searching for results");
 
             var splitedSearchTitle = searchTitle.Split();
             var movieID = string.Empty;
@@ -41,6 +46,8 @@ namespace PhoenixAdult.Sites
                 if (searchResult.Any())
                 {
                     result.AddRange(searchResult);
+
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found results {searchResult.Count}");
                 }
             }
             else
@@ -49,6 +56,8 @@ namespace PhoenixAdult.Sites
                 var data = await HTML.ElementFromURL(url, cancellationToken).ConfigureAwait(false);
 
                 var searchResults = data.SelectNodesSafe("//div[@id='movies']//div[contains(@class, 'movie')]");
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found results {searchResults.Count} now processing");
+
                 foreach (var searchResult in searchResults)
                 {
                     var sceneURL = new Uri(Helper.GetSearchBaseURL(siteNum) + $"/en/?v={searchResult.SelectSingleText(".//a/@href")}");
@@ -56,6 +65,7 @@ namespace PhoenixAdult.Sites
                         sceneName = searchResult.SelectSingleText(".//a[@class='actor']"),
                         sceneDate = searchResult.SelectSingleText(".//p[@class='release']").Replace("Release:", string.Empty, StringComparison.OrdinalIgnoreCase).Trim(),
                         scenePoster = Helper.GetSearchBaseURL(siteNum) + searchResult.SelectSingleText(".//img/@data-original");
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found title: {sceneName}");
 
                     var res = new RemoteSearchResult
                     {
@@ -73,11 +83,15 @@ namespace PhoenixAdult.Sites
                 }
             }
 
+            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): **** Leaving - Search results: Found {result.Count} results for searchTitle: {searchTitle}");
+
             return result;
         }
 
         public async Task<MetadataResult<BaseItem>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
         {
+            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): **** Starting");
+
             var result = new MetadataResult<BaseItem>()
             {
                 Item = new Movie(),
@@ -86,6 +100,7 @@ namespace PhoenixAdult.Sites
 
             if (sceneID == null)
             {
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Leaving early empty sceneID");
                 return result;
             }
 
@@ -95,11 +110,18 @@ namespace PhoenixAdult.Sites
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
             }
 
+            Logger.Info($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Loading scene: {sceneURL}");
+
             var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
 
             result.Item.ExternalId = sceneURL;
+            if (Plugin.Instance.Configuration.EnableDebugging)
+            {
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): externalID: {result.Item.ExternalId}");
+            }
 
             result.Item.Name = sceneData.SelectSingleText("//h1").Trim().Split("\n").First();
+            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): title: {result.Item.Name}");
 
             foreach (var movieInfo in sceneData.SelectNodesSafe("//table[@class='movieInfo']//tr"))
             {
@@ -107,25 +129,51 @@ namespace PhoenixAdult.Sites
                 switch (cellNode[0].InnerText)
                 {
                     case "Released":
+                        if (Plugin.Instance.Configuration.EnableDebugging)
+                        {
+                            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Finding Premier date");
+                        }
+
                         var date = cellNode[1].InnerText.Trim();
                         if (DateTime.TryParseExact(date, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
                         {
                             result.Item.PremiereDate = sceneDateObj;
+                            if (Plugin.Instance.Configuration.EnableDebugging)
+                            {
+                                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Premier date added {sceneDateObj.ToString()}");
+                            }
                         }
 
                         break;
 
                     case "Sex Styles":
+                        if (Plugin.Instance.Configuration.EnableDebugging)
+                        {
+                            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing Genres");
+                        }
+
                         var genreNode = cellNode[1].SelectNodesSafe(".//a[contains(@href, 'category')]");
                         foreach (var genreLink in genreNode)
                         {
                             var genreName = genreLink.InnerText;
 
-                            result.Item.AddGenre(genreName);
+                            if (!string.IsNullOrEmpty(genreName))
+                            {
+                                result.Item.AddGenre(genreName);
+                                if (Plugin.Instance.Configuration.EnableDebugging)
+                                {
+                                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found genre: {genreName}");
+                                }
+                            }
                         }
 
                         break;
                     case "Actress(es)":
+                        if (Plugin.Instance.Configuration.EnableDebugging)
+                        {
+                            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing Actors");
+                        }
+
                         var actorsNode = cellNode[1].SelectNodesSafe(".//a[contains(@href, 'actor')]");
                         foreach (var actorLink in actorsNode)
                         {
@@ -143,6 +191,10 @@ namespace PhoenixAdult.Sites
                             {
                                 Name = actorName,
                             };
+                            if (Plugin.Instance.Configuration.EnableDebugging)
+                            {
+                                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found actor: {actorName}");
+                            }
 
                             result.People.Add(actor);
                         }
@@ -151,15 +203,20 @@ namespace PhoenixAdult.Sites
                 }
             }
 
+            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): **** Leaving - Updated title: {result.Item.Name}");
+
             return result;
         }
 
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
+            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): **** Starting");
+
             var result = new List<RemoteImageInfo>();
 
             if (sceneID == null)
             {
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Leaving early empty sceneID");
                 return result;
             }
 
@@ -172,6 +229,8 @@ namespace PhoenixAdult.Sites
             var movieID = sceneURL.Replace("/index.html", string.Empty, StringComparison.OrdinalIgnoreCase).Split("/").Last();
             if (!string.IsNullOrEmpty(movieID) && int.TryParse(movieID, out _))
             {
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+
                 result.Add(new RemoteImageInfo
                 {
                     Url = $"https://en.heyzo.com/contents/3000/{movieID}/images/player_thumbnail_en.jpg",
@@ -181,6 +240,8 @@ namespace PhoenixAdult.Sites
 
             for (var i = 0; i <= 21; i++)
             {
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+
                 string index = i.ToString(CultureInfo.InvariantCulture).PadLeft(3, '0'),
                     img = $"https://en.heyzo.com/contents/3000/{movieID}/gallery/{index}.jpg";
 
@@ -196,6 +257,8 @@ namespace PhoenixAdult.Sites
                     Type = ImageType.Backdrop,
                 });
             }
+
+            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): **** Leaving - Found {result.Count} images");
 
             return result;
         }

@@ -113,14 +113,12 @@ namespace PhoenixAdult.Sites
             var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
 
             result.Item.ExternalId = sceneURL;
-
             if (Plugin.Instance.Configuration.EnableDebugging)
             {
                 Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): externalID: {result.Item.ExternalId}");
             }
 
             result.Item.Name = sceneData.SelectSingleText("//h1/text()");
-
             Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): title: {result.Item.Name}");
 
             var overview = sceneData.SelectSingleText("//h4[contains(@class, 'synopsis')]");
@@ -130,7 +128,6 @@ namespace PhoenixAdult.Sites
             }
 
             result.Item.Overview = overview;
-
             if (Plugin.Instance.Configuration.EnableDebugging)
             {
                 Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): overview: {result.Item.Overview}");
@@ -139,12 +136,11 @@ namespace PhoenixAdult.Sites
             var studioName = sceneData.SelectSingleText("//a[@label='Studio']");
             if (!string.IsNullOrEmpty(studioName))
             {
+                result.Item.AddStudio(studioName);
                 if (Plugin.Instance.Configuration.EnableDebugging)
                 {
                     Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): studio: {studioName}");
                 }
-
-                result.Item.AddStudio(studioName);
             }
 
             if (Plugin.Instance.Configuration.EnableDebugging)
@@ -171,11 +167,12 @@ namespace PhoenixAdult.Sites
             var genreNode = sceneData.SelectNodesSafe("//div[h2[contains(., 'Categories')]]//a[@label='Category']");
             foreach (var genreLink in genreNode)
             {
-                result.Item.AddGenre(genreLink.InnerText);
+                var genreName = genreLink.InnerText.Trim();
 
+                result.Item.AddGenre(genreName);
                 if (Plugin.Instance.Configuration.EnableDebugging)
                 {
-                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found genre: {genreLink.InnerText}");
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found genre: {genreName}");
                 }
             }
 
@@ -190,27 +187,26 @@ namespace PhoenixAdult.Sites
                 string actorName = actorLink.InnerText,
                     actorPhoto = actorLink.SelectSingleText(".//img/@src");
 
+                var actor = new PersonInfo
+                {
+                    Name = actorName,
+                };
                 if (Plugin.Instance.Configuration.EnableDebugging)
                 {
                     Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found actor: {actorName}");
                 }
 
-                var res = new PersonInfo
-                {
-                    Name = actorName,
-                };
-
                 if (!string.IsNullOrEmpty(actorPhoto))
                 {
-                    res.ImageUrl = actorPhoto;
+                    actor.ImageUrl = actorPhoto;
 
                     if (Plugin.Instance.Configuration.EnableDebugging)
                     {
-                        Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found actor photoURL: {res.ImageUrl.ToString()}");
+                        Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found actor photoURL: {actorPhoto}");
                     }
                 }
 
-                result.People.Add(res);
+                result.People.Add(actor);
             }
 
             Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): **** Leaving - Updated title: {result.Item.Name}");

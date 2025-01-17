@@ -77,7 +77,6 @@ namespace PhoenixAdult.Sites
                         sceneName = (string)searchResult["node"]["title"],
                         scenePoster = (string)searchResult["node"]["images"]["listing"].First()["src"];
                 var sceneDateObj = (DateTime)searchResult["node"]["releaseDate"];
-
                 Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing {sceneUrl}");
                 Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found title: {sceneName}");
 
@@ -114,7 +113,6 @@ namespace PhoenixAdult.Sites
             }
 
             var sceneURL = Helper.Decode(sceneID[0]).TrimStart('/');
-
             Logger.Info($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Loading scene: {sceneURL}");
 
             var variables = string.Format(this.updateVariables, sceneURL, Helper.GetSearchSiteName(siteNum).ToUpper());
@@ -131,28 +129,24 @@ namespace PhoenixAdult.Sites
             sceneData = (JObject)sceneData["findOneVideo"];
 
             result.Item.ExternalId = Helper.GetSearchBaseURL(siteNum) + $"/videos/{sceneURL}";
-
             if (Plugin.Instance.Configuration.EnableDebugging)
             {
                 Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): externalID: {result.Item.ExternalId}");
             }
 
             result.Item.Name = (string)sceneData["title"];
-
             Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): title: {result.Item.Name}");
 
             result.Item.Overview = (string)sceneData["description"];
-
             if (Plugin.Instance.Configuration.EnableDebugging)
             {
                 Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): overview: {result.Item.Overview}");
             }
 
             result.Item.AddStudio(Helper.GetSearchSiteName(siteNum));
-
             if (Plugin.Instance.Configuration.EnableDebugging)
             {
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): studio: {result.Item.Studios.First().ToString()}");
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): studio: {result.Item.Studios[0]}");
             }
 
             if (Plugin.Instance.Configuration.EnableDebugging)
@@ -162,7 +156,6 @@ namespace PhoenixAdult.Sites
 
             var sceneDateObj = (DateTime)sceneData["releaseDate"];
             result.Item.PremiereDate = sceneDateObj;
-
             if (Plugin.Instance.Configuration.EnableDebugging)
             {
                 Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Premier date added {sceneDateObj.ToString()}");
@@ -176,7 +169,6 @@ namespace PhoenixAdult.Sites
             foreach (var genreLink in sceneData["categories"])
             {
                 result.Item.AddGenre((string)genreLink["name"]);
-
                 if (Plugin.Instance.Configuration.EnableDebugging)
                 {
                     Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found genre: {(string)genreLink["name"]}");
@@ -190,10 +182,16 @@ namespace PhoenixAdult.Sites
 
             foreach (var actorLink in sceneData["models"])
             {
+                var actorName = (string)actorLink["name"];
+
                 var actor = new PersonInfo
                 {
-                    Name = (string)actorLink["name"],
+                    Name = actorName,
                 };
+                if (Plugin.Instance.Configuration.EnableDebugging)
+                {
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found actor: {actorName}");
+                }
 
                 if (actorLink["images"].Any())
                 {
@@ -202,7 +200,6 @@ namespace PhoenixAdult.Sites
 
                 if (Plugin.Instance.Configuration.EnableDebugging)
                 {
-                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found actor: {actor.Name}");
                     Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found actor photoURL: {actor.ImageUrl}");
                 }
 
@@ -230,11 +227,11 @@ namespace PhoenixAdult.Sites
 
             var variables = string.Format(this.updateVariables, sceneURL, Helper.GetSearchSiteName(siteNum).ToUpper());
             var url = Helper.GetSearchSearchURL(siteNum);
-            Logger.Debug($"get images: {variables}, {url}");
 
             var sceneData = await GetDataFromAPI(url, this.updateQuery, variables, cancellationToken).ConfigureAwait(false);
             if (sceneData == null)
             {
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Leaving early empty image");
                 return result;
             }
 

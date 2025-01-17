@@ -25,16 +25,23 @@ namespace PhoenixAdult.Sites
 
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
+            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): ***** Starting - searchTitle: {searchTitle}");
+
             var result = new List<RemoteSearchResult>();
             if (siteNum == null || string.IsNullOrEmpty(searchTitle))
             {
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): ***** Leaving early empty search title");
                 return result;
             }
+
+            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Searching for results");
 
             var rootUrl = Helper.GetSearchSearchURL(siteNum);
             var searchResultsURLs = new List<string>();
 
             var searchResults = await GoogleSearch.GetSearchResults(searchTitle, siteNum, cancellationToken).ConfigureAwait(false);
+            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found results {searchResults.Count}");
+
             foreach (var searchResult in searchResults)
             {
                 if (searchResult.StartsWith(rootUrl))
@@ -60,11 +67,15 @@ namespace PhoenixAdult.Sites
                 }
             }
 
+            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): **** Leaving - Search results: Found {result.Count} results for searchTitle: {searchTitle}");
+
             return result;
         }
 
         public async Task<MetadataResult<BaseItem>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
         {
+            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): **** Starting");
+
             var result = new MetadataResult<BaseItem>()
             {
                 Item = new Movie(),
@@ -73,6 +84,7 @@ namespace PhoenixAdult.Sites
 
             if (sceneID == null || siteNum == null)
             {
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Leaving early empty sceneID");
                 return result;
             }
 
@@ -83,6 +95,8 @@ namespace PhoenixAdult.Sites
             {
                 sceneURL = Helper.GetSearchBaseURL(siteNum) + sceneURL;
             }
+
+            Logger.Info($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Loading scene: {sceneURL}");
 
             var searchSite = Helper.GetSearchSiteName(siteNum);
             Logger.Info($"Search site: {searchSite}");
@@ -100,21 +114,25 @@ namespace PhoenixAdult.Sites
             }
 
             result.Item.ExternalId = sceneURL;
+            if (Plugin.Instance.Configuration.EnableDebugging)
+            {
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): externalID: {result.Item.ExternalId}");
+            }
+
             result.Item.AddStudio("New Sensations");
+            if (Plugin.Instance.Configuration.EnableDebugging)
+            {
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): studio: {result.Item.Studios[0]}");
+            }
+
             var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
 
             switch (site)
             {
                 case Site.FamilyXXX:
                     {
-                        result.Item.AddStudio("Family XXX");
                         result.Item.Name = sceneData.SelectSingleText("//div[@class='sceneRight']//div[@class='indScene']//h2");
-
-                        var dateNode = sceneData.SelectSingleText("//div[@class='sceneRight']//div[@class='indScene']//div[@class='sceneDateP']//span").TrimEnd(',');
-                        if (DateTime.TryParseExact(dateNode, "MM/dd/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
-                        {
-                            result.Item.PremiereDate = sceneDateObj;
-                        }
+                        Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): title: {result.Item.Name}");
 
                         var descriptionNode = sceneData.SelectNodesSafe("//div[@class='description']//p");
                         var overview = descriptionNode[0].InnerText.Trim();
@@ -122,8 +140,38 @@ namespace PhoenixAdult.Sites
                         // remove <span>Description:</span> from beginning
                         overview = overview.Substring(13);
                         result.Item.Overview = overview;
+                        if (Plugin.Instance.Configuration.EnableDebugging)
+                        {
+                            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): overview: {result.Item.Overview}");
+                        }
+
+                        result.Item.AddStudio("Family XXX");
+                        if (Plugin.Instance.Configuration.EnableDebugging)
+                        {
+                            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): studio: {result.Item.Studios[0]}");
+                        }
+
+                        if (Plugin.Instance.Configuration.EnableDebugging)
+                        {
+                            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Finding Premier date");
+                        }
+
+                        var dateNode = sceneData.SelectSingleText("//div[@class='sceneRight']//div[@class='indScene']//div[@class='sceneDateP']//span").TrimEnd(',');
+                        if (DateTime.TryParseExact(dateNode, "MM/dd/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
+                        {
+                            result.Item.PremiereDate = sceneDateObj;
+                            if (Plugin.Instance.Configuration.EnableDebugging)
+                            {
+                                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Premier date added {result.Item.PremiereDate}");
+                            }
+                        }
 
                         // performers
+                        if (Plugin.Instance.Configuration.EnableDebugging)
+                        {
+                            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing Actors");
+                        }
+
                         var performerNodes = sceneData.SelectNodesSafe("//div[@class='sceneRight']//div[@class='indScene']//div[@class='sceneTextLink']//p//span//a");
 
                         foreach (var performerNode in performerNodes)
@@ -131,11 +179,20 @@ namespace PhoenixAdult.Sites
                             var performerUrl = performerNode.Attributes["href"].Value;
                             var performerPage = await HTML.ElementFromURL(performerUrl, cancellationToken).ConfigureAwait(false);
                             var performerImg = performerPage.SelectSingleNode("//div[contains(@class, 'modelBioPic')]/img");
-                            result.People.Add(new PersonInfo
+
+                            var actor = new PersonInfo
                             {
                                 Name = performerNode.InnerText,
                                 ImageUrl = performerImg.Attributes["src0_1x"].Value,
-                            });
+                            };
+
+                            if (Plugin.Instance.Configuration.EnableDebugging)
+                            {
+                                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found actor: {actor.Name}");
+                                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found actor photoURL: {actor.ImageUrl}");
+                            }
+
+                            result.People.Add(actor);
                         }
 
                         break;
@@ -143,15 +200,8 @@ namespace PhoenixAdult.Sites
 
                 case Site.HotWifeXXX:
                     {
-                        result.Item.AddStudio("HotwifeXXX");
                         result.Item.Name = sceneData.SelectSingleText("//div[@class='trailerInfo']/h2");
-
-                        var dateNodeText = sceneData.SelectSingleText("//div[@class='trailerInfo']//div[contains(@class, 'released2')]");
-                        var date = dateNodeText.Substring(0, dateNodeText.IndexOf(','));
-                        if (DateTime.TryParseExact(date, "MM/dd/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
-                        {
-                            result.Item.PremiereDate = sceneDateObj;
-                        }
+                        Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): title: {result.Item.Name}");
 
                         var descriptionNode = sceneData.SelectNodesSafe("//div[@class='dvdDescription']//p");
                         var overview = descriptionNode[0].InnerText.Trim();
@@ -159,16 +209,54 @@ namespace PhoenixAdult.Sites
                         // remove <span>Description:</span> from beginning
                         overview = overview.Substring(13);
                         result.Item.Overview = overview;
+                        if (Plugin.Instance.Configuration.EnableDebugging)
+                        {
+                            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): overview: {result.Item.Overview}");
+                        }
+
+                        result.Item.AddStudio("HotwifeXXX");
+                        if (Plugin.Instance.Configuration.EnableDebugging)
+                        {
+                            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): studio: {result.Item.Studios[0]}");
+                        }
+
+                        if (Plugin.Instance.Configuration.EnableDebugging)
+                        {
+                            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Finding Premier date");
+                        }
+
+                        var dateNodeText = sceneData.SelectSingleText("//div[@class='trailerInfo']//div[contains(@class, 'released2')]");
+                        var date = dateNodeText.Substring(0, dateNodeText.IndexOf(','));
+                        if (DateTime.TryParseExact(date, "MM/dd/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
+                        {
+                            result.Item.PremiereDate = sceneDateObj;
+                            if (Plugin.Instance.Configuration.EnableDebugging)
+                            {
+                                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Premier date added {result.Item.PremiereDate}");
+                            }
+                        }
 
                         // performers
+                        if (Plugin.Instance.Configuration.EnableDebugging)
+                        {
+                            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing Actors");
+                        }
+
                         var performerNodes = sceneData.SelectNodesSafe("//div[@class='trailerInfo']//span[@class='tour_update_models']/a");
 
                         foreach (var performerNode in performerNodes)
                         {
-                            result.People.Add(new PersonInfo
+                            var actor = new PersonInfo
                             {
                                 Name = performerNode.InnerText,
-                            });
+                            };
+
+                            if (Plugin.Instance.Configuration.EnableDebugging)
+                            {
+                                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found actor: {actor.Name}");
+                            }
+
+                            result.People.Add(actor);
                         }
 
                         break;
@@ -177,41 +265,72 @@ namespace PhoenixAdult.Sites
                 default:
                     {
                         result.Item.Name = sceneData.SelectSingleText("//div[@class='sceneRight']//div[@class='indScene']//h1");
+                        Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): title: {result.Item.Name}");
+
+                        var descriptionNodes = sceneData.SelectNodesSafe("//div[@class='description']//h2");
+                        var overview = descriptionNodes[0].InnerText.Trim();
+                        result.Item.Overview = overview;
+                        if (Plugin.Instance.Configuration.EnableDebugging)
+                        {
+                            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): overview: {result.Item.Overview}");
+                        }
+
+                        if (Plugin.Instance.Configuration.EnableDebugging)
+                        {
+                            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Finding Premier date");
+                        }
 
                         var dateNode = sceneData.SelectSingleText("//div[@class='sceneRight']//div[@class='indScene']//div[@class='sceneDateP']//span").TrimEnd(',');
                         if (DateTime.TryParseExact(dateNode, "MM/dd/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
                         {
                             result.Item.PremiereDate = sceneDateObj;
+                            if (Plugin.Instance.Configuration.EnableDebugging)
+                            {
+                                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Premier date added {result.Item.PremiereDate}");
+                            }
                         }
 
-                        var descriptionNodes = sceneData.SelectNodesSafe("//div[@class='description']//h2");
-                        var overview = descriptionNodes[0].InnerText.Trim();
-                        result.Item.Overview = overview;
-
                         // performers
+                        if (Plugin.Instance.Configuration.EnableDebugging)
+                        {
+                            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing Actors");
+                        }
+
                         var performerNodes = sceneData.SelectNodesSafe("//div[@class='sceneRight']//div[@class='indScene']//div[@class='sceneTextLink']//p//span//a");
 
                         foreach (var performerNode in performerNodes)
                         {
-                            result.People.Add(new PersonInfo
+                            var actor = new PersonInfo
                             {
                                 Name = performerNode.InnerText,
-                            });
+                            };
+
+                            if (Plugin.Instance.Configuration.EnableDebugging)
+                            {
+                                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found actor: {actor.Name}");
+                            }
+
+                            result.People.Add(actor);
                         }
 
                         break;
                     }
             }
 
+            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): **** Leaving - Updated title: {result.Item.Name}");
+
             return result;
         }
 
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
+            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): **** Starting");
+
             var result = new List<RemoteImageInfo>();
 
             if (sceneID == null)
             {
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Leaving early empty sceneID");
                 return result;
             }
 
@@ -222,6 +341,7 @@ namespace PhoenixAdult.Sites
             }
 
             var sceneData = await HTML.ElementFromURL(sceneURL, cancellationToken).ConfigureAwait(false);
+            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
 
             var posterNode = sceneData.SelectSingleNode("//span[@id='trailer_thumb']//span//img");
             result.Add(new RemoteImageInfo
@@ -234,6 +354,9 @@ namespace PhoenixAdult.Sites
                 Url = posterNode.Attributes["src"].Value,
                 Type = ImageType.Backdrop,
             });
+
+            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): **** Leaving - Found {result.Count} images");
+
             return result;
         }
     }
