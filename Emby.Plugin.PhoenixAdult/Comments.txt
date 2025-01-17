@@ -43,7 +43,7 @@ if (Plugin.Instance.Configuration.EnableDebugging)
 
 if (Plugin.Instance.Configuration.EnableDebugging)
 {
-	Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): studio: Naughty America");
+	Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): studio: {result.Item.Studios[0]}");
 }
 
 if (Plugin.Instance.Configuration.EnableDebugging)
@@ -84,7 +84,7 @@ if (Plugin.Instance.Configuration.EnableDebugging)
 
 if (Plugin.Instance.Configuration.EnableDebugging)
 {
-	Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found actor photoURL: {res.ImageUrl.ToString()}");
+	Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found actor photoURL: {actorPhoto}");
 }
 
 Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): **** Leaving - Updated title: {result.Item.Name}");
