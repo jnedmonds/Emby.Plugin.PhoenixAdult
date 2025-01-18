@@ -217,6 +217,8 @@ namespace PhoenixAdult.Providers
             var actorData = await HTML.ElementFromURL(url, cancellationToken).ConfigureAwait(false);
 
             var actorPageURL = actorData.SelectSingleText("//div[@id='performerlist']/div//a/@href");
+            Logger.Debug($"ActorImageProvider-GetFromAdultDVDEmpire(): actorPageURL: {actorPageURL}");
+
             if (!string.IsNullOrEmpty(actorPageURL))
             {
                 Logger.Debug($"ActorImageProvider-GetFromAdultDVDEmpire(): Found actor page");

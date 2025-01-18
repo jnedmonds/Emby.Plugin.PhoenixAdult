@@ -103,10 +103,14 @@ namespace PhoenixAdult.Sites
             string hip = actorData.SelectSingleText("//span[@data-test='link_span_hip']/text()") ?? "Unknown";
             string height = actorData.SelectSingleText("//span[@data-test='link_span_height']/text()") ?? "Unknown";
             string weight = actorData.SelectSingleText("//span[@data-test='link_span_weight']/text()") ?? "Unknown";
-            string piercingLocations = actorData.SelectSingleText("//span[@data-test='link_span_piercingLocations']/text()") ?? "None";
+            string piercings = actorData.SelectSingleText("//span[@data-test='link_span_piercingLocations']/text()");
+            string piercingLocations = actorData.SelectSingleText("//span[@data-test='link_span_piercingLocations']/text()");
 
             overview = $"Ethenticity: {ethenticity} Sizes: {braSize} ({boobType}) - {height} / {weight} - {waist} / {hip}\n";
-            overview += $"Piercing Locations: {piercingLocations}";
+            if (piercings.ToUpper() == "YES")
+            {
+                overview += $"Piercing Locations: {piercingLocations}";
+            }
 
             result.Item.Overview = overview.Trim();
 

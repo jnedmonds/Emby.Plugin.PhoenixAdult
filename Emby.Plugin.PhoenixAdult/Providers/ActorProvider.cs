@@ -28,7 +28,7 @@ namespace PhoenixAdult.Providers
 
             if (searchInfo == null || searchInfo.ProviderIds.Any(o => !string.IsNullOrEmpty(o.Value)))
             {
-                Logger.Info($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): ***** Leaving early empty searchInfo");
+                Logger.Info($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): ***** Leaving early empty searchInfo or external ID exists");
                 return result;
             }
 
