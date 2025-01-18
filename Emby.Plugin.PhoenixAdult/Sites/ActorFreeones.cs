@@ -95,7 +95,7 @@ namespace PhoenixAdult.Sites
 
             Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Actor Name: {result.Item.OriginalTitle}");
 
-            string overview = "";
+            string overview = string.Empty;
             string ethenticity = actorData.SelectSingleText("//span[@data-test='link_span_ethnicity']/text()") ?? "Unknown";
             string braSize = actorData.SelectSingleText("//span[@data-test='link_span_bra']/text()") ?? "Unknown";
             string boobType = actorData.SelectSingleText("//span[@data-test='link_span_boobs']/text()") ?? "Unknown";
