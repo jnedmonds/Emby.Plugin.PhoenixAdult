@@ -6,6 +6,7 @@ using System.Reflection.Emit;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
@@ -77,40 +78,43 @@ namespace PhoenixAdult.Sites
                 Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): externalID: {result.Item.ExternalId}");
             }
 
-            string name = actorData.SelectSingleText("//h1").Replace(" Bio", string.Empty, StringComparison.OrdinalIgnoreCase),
-                aliases = actorData.SelectSingleText("//p[contains(., 'Aliases')]/following-sibling::div/p");
+            string name = string.Empty;
+            var h1Node = actorData.SelectNodesSafe("//h1");
 
-            result.Item.OriginalTitle = name + ", " + aliases;
+            if (h1Node != null)
+            {
+                name = h1Node[0].InnerText.Substring(h1Node[0].InnerText.IndexOf("\n\n")).Trim();
+                name = name.Replace(" Bio", string.Empty, StringComparison.OrdinalIgnoreCase);
+
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): H1 remove Bio: {name}");
+            }
+
+            string aliases = actorData.SelectSingleText("//span[@data-test='link_span_aliases']/text()");
+
+            result.Item.OriginalTitle = name.Trim() + ", " + aliases.Trim();
+
             Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Actor Name: {result.Item.OriginalTitle}");
 
             string overview;
-            string ethenicity = actorData.SelectSingleText("//span[@data-test='link_span_ethnicity']/text()") ?? "Unknown";
+            string ethenticity = actorData.SelectSingleText("//span[@data-test='link_span_ethnicity']/text()") ?? "Unknown";
             string braSize = actorData.SelectSingleText("//span[@data-test='link_span_bra']/text()") ?? "Unknown";
             string boobType = actorData.SelectSingleText("//span[@data-test='link_span_boobs']/text()") ?? "Unknown";
             string waist = actorData.SelectSingleText("//span[@data-test='link_span_waist']/text()") ?? "Unknown";
             string hip = actorData.SelectSingleText("//span[@data-test='link_span_hip']/text()") ?? "Unknown";
             string height = actorData.SelectSingleText("//span[@data-test='link_span_height']/text()") ?? "Unknown";
             string weight = actorData.SelectSingleText("//span[@data-test='link_span_weight']/text()") ?? "Unknown";
-            string hairColor = actorData.SelectSingleText("//span[@data-test='link_span_hair_color']/text()") ?? "Unknown";
-            string eyeColor = actorData.SelectSingleText("//span[@data-test='link_span_eye_color']/text()") ?? "Unknown";
             string piercingLocations = actorData.SelectSingleText("//span[@data-test='link_span_piercingLocations']/text()") ?? "None";
-            string tattooLocations = actorData.SelectSingleText("//span[@data-test='link_span_tattooLocations']/text()") ?? "None";
 
-            overview = $"Ethenicity: {ethenicity} Hair Color: {hairColor} Eye Color: {eyeColor}\n";
-            overview += $"Bra Size: {braSize} ({boobType}) - {height} / {weight} - {waist} / {hip}\n";
-            overview += $"Piercing Locations: {piercingLocations} / Tattoos: {tattooLocations}\n";
+            overview = $"Ethenticity: {ethenticity} Sizes: {braSize} ({boobType}) - {height} / {weight} - {waist} / {hip}\n";
+            overview += $"Piercing Locations: {piercingLocations}";
 
-            // result.Item.Overview = "\u200B";
-            result.Item.Overview = overview;
+            result.Item.Overview = overview.Trim();
 
             if (Plugin.Instance.Configuration.EnableDebugging)
             {
                 Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Overview: {result.Item.Overview}");
             }
 
-            /* var actorDate = actorData.SelectSingleText("//div[p[contains(., 'Personal Information')]]//span[contains(., 'Born On')]")
-                .Replace("Born On", string.Empty, StringComparison.OrdinalIgnoreCase)
-                .Trim(); */
             var actorDate = actorData.SelectSingleText("//span[contains(@data-test, 'link_span_dateOfBirth')]").Trim();
             if (DateTime.TryParseExact(actorDate, "MMMM d, yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
             {
@@ -123,7 +127,6 @@ namespace PhoenixAdult.Sites
 
             var bornPlaceList = new List<string>();
 
-            // var bornPlaceNode = actorData.SelectNodesSafe("//div[p[contains(., 'Personal Information')]]//a[@data-test='link-country']/..//span[text()]");
             var bornPlaceNode = actorData.SelectNodesSafe("//span[@data-test='link_span_placeOfBirth']/..//span[text()]");
             foreach (var bornPlace in bornPlaceNode)
             {

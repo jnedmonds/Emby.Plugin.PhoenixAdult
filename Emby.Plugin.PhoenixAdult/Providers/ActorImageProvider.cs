@@ -23,6 +23,14 @@ namespace PhoenixAdult.Providers
     {
         public string Name => Plugin.Instance.Name;
 
+        public bool Supports(BaseItem item) => item is Person;
+
+        public IEnumerable<ImageType> GetSupportedImages(BaseItem item)
+            => new List<ImageType>
+            {
+                ImageType.Primary,
+            };
+
         public static async Task<List<RemoteImageInfo>> GetActorPhotos(string name, CancellationToken cancellationToken)
         {
             Logger.Debug($"ActorImageProvider-GetActorPhotos(): **** Starting - searchInfo: {name}");
@@ -65,7 +73,7 @@ namespace PhoenixAdult.Providers
             }
             catch (Exception e)
             {
-                Logger.Error($"ActorImageProvider-GetActorPhotos(): GetActorPhotos error: \"{e}\"");
+                Logger.Error($"ActorImageProvider-GetActorPhotos(): error: \"{e}\"");
 
                 await Analytics.Send(
                     new AnalyticsExeption
@@ -96,14 +104,6 @@ namespace PhoenixAdult.Providers
 
             return imageList;
         }
-
-        public bool Supports(BaseItem item) => item is Person;
-
-        public IEnumerable<ImageType> GetSupportedImages(BaseItem item)
-            => new List<ImageType>
-            {
-                ImageType.Primary,
-            };
 
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(BaseItem item, LibraryOptions libraryOptions, CancellationToken cancellationToken)
         {
@@ -232,11 +232,15 @@ namespace PhoenixAdult.Providers
                 if (!string.IsNullOrEmpty(img))
                 {
                     image = img;
-                    Logger.Debug($"ActorImageProvider-GetFromAdultDVDEmpire(): Found image");
+                    Logger.Debug($"ActorImageProvider-GetFromAdultDVDEmpire(): Found image: {image}");
                 }
             }
+            else
+            {
+                Logger.Debug($"ActorImageProvider-GetFromAdultDVDEmpire(): Failed to find image");
+            }
 
-            Logger.Debug($"ActorImageProvider-GetFromAdultDVDEmpire(): **** Leaving  - Found {image.Length} images");
+            Logger.Debug($"ActorImageProvider-GetFromAdultDVDEmpire(): **** Leaving");
 
             return image;
         }
@@ -257,7 +261,6 @@ namespace PhoenixAdult.Providers
 
             var actorData = await HTML.ElementFromURL(url, cancellationToken).ConfigureAwait(false);
 
-            // var img = actorData.SelectSingleText("//table[@class='infobox']//a[@class='image']//img/@src");
             var img = actorData.SelectSingleText("//table[contains(@class, 'infobox')]//a[@class='mw-file-description']//img/@src");
             if (!string.IsNullOrEmpty(img) && !img.Contains("NoImage", StringComparison.OrdinalIgnoreCase))
             {
@@ -269,10 +272,14 @@ namespace PhoenixAdult.Providers
                 }
 
                 image = img;
-                Logger.Debug($"ActorImageProvider-GetFromBoobpedia(): Found image");
+                Logger.Debug($"ActorImageProvider-GetFromBoobpedia(): Found image: {image}");
+            }
+            else
+            {
+                Logger.Debug($"ActorImageProvider-GetFromBoobpedia(): Failed to find image");
             }
 
-            Logger.Debug($"ActorImageProvider-GetFromBoobpedia(): **** Leaving  - Found {image.Length} images");
+            Logger.Debug($"ActorImageProvider-GetFromBoobpedia(): **** Leaving");
 
             return image;
         }
@@ -304,10 +311,14 @@ namespace PhoenixAdult.Providers
                 }
 
                 image = img;
-                Logger.Debug($"ActorImageProvider-GetFromBabepedia(): Found image");
+                Logger.Debug($"ActorImageProvider-GetFromBabepedia(): Found image: {image}");
+            }
+            else
+            {
+                Logger.Debug($"ActorImageProvider-GetFromBabepedia(): Failed to find image");
             }
 
-            Logger.Debug($"ActorImageProvider-GetFromBabepedia(): **** Leaving - Found {image.Length} images");
+            Logger.Debug($"ActorImageProvider-GetFromBabepedia(): **** Leaving");
 
             return image;
         }
@@ -345,11 +356,15 @@ namespace PhoenixAdult.Providers
                 if (!actorImage.Contains("nophoto", StringComparison.OrdinalIgnoreCase))
                 {
                     image = actorImage;
-                    Logger.Debug($"ActorImageProvider-GetFromIAFD(): Found image");
+                    Logger.Debug($"ActorImageProvider-GetFromIAFD(): Found image: {image}");
                 }
             }
+            else
+            {
+                Logger.Debug($"ActorImageProvider-GetFromIAFD(): Failed to find image");
+            }
 
-            Logger.Debug($"ActorImageProvider-GetFromIAFD(): **** Leaving  - Found {image.Length} images");
+            Logger.Debug($"ActorImageProvider-GetFromIAFD(): **** Leaving");
 
             return image;
         }
