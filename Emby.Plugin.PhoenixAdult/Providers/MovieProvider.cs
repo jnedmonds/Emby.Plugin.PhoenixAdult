@@ -12,6 +12,7 @@ using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Providers;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
+using PhoenixAdult.Sites;
 
 namespace PhoenixAdult.Providers
 {
@@ -26,14 +27,15 @@ namespace PhoenixAdult.Providers
 
         public async Task<IEnumerable<RemoteSearchResult>> GetSearchResults(MovieInfo searchInfo, CancellationToken cancellationToken)
         {
+            Logger.Info($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): ***** Starting - searchInfo: {searchInfo.Name} ");
+
             var result = new List<RemoteSearchResult>();
 
             if (searchInfo == null || string.IsNullOrEmpty(searchInfo.Name))
             {
+                Logger.Info($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): ***** Leaving early empty searchInfo");
                 return result;
             }
-
-            Logger.Info($"searchInfo.Name: {searchInfo.Name}");
 
             var title = string.Empty;
             (int[] siteNum, string siteName) site = (null, null);
@@ -58,7 +60,7 @@ namespace PhoenixAdult.Providers
 
                 if (!string.IsNullOrEmpty(newTitle) && !newTitle.Equals(searchInfo.Name, StringComparison.OrdinalIgnoreCase))
                 {
-                    Logger.Info($"newTitle: {newTitle}");
+                    Logger.Info($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): newTitle: {newTitle}");
 
                     title = Helper.ReplaceAbbrieviation(newTitle);
                     site = Helper.GetSiteFromTitle(title);
@@ -66,6 +68,7 @@ namespace PhoenixAdult.Providers
 
                 if (site.siteNum == null)
                 {
+                    Logger.Info($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): ***** Leaving early empty site");
                     return result;
                 }
             }
@@ -92,17 +95,18 @@ namespace PhoenixAdult.Providers
 
             if (string.IsNullOrEmpty(searchTitle))
             {
+                Logger.Info($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): ***** Leaving early empty searchTitle");
                 return result;
             }
 
-            Logger.Info($"site: {site.siteNum[0]}:{site.siteNum[1]} ({site.siteName})");
-            Logger.Info($"searchTitle: {searchTitle}");
-            Logger.Info($"searchDate: {searchDate}");
+            Logger.Info($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): site: {site.siteNum[0]}:{site.siteNum[1]} ({site.siteName})");
+            Logger.Info($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): searchTitle: {searchTitle}");
+            Logger.Info($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): searchDate: {searchDate}");
 
             var provider = Helper.GetProviderBySiteID(site.siteNum[0]);
             if (provider != null)
             {
-                Logger.Info($"provider: {provider}");
+                Logger.Info($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): provider: {provider}");
 
                 try
                 {
@@ -110,7 +114,7 @@ namespace PhoenixAdult.Providers
                 }
                 catch (Exception e)
                 {
-                    Logger.Error($"Search error: \"{e}\"");
+                    Logger.Error($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Search error: \"{e}\"");
 
                     await Analytics.Send(
                         new AnalyticsExeption
@@ -152,14 +156,17 @@ namespace PhoenixAdult.Providers
             }
             else
             {
-                Logger.Error($"Failed to find provider for site {site.siteNum[0]}:{site.siteNum[1]}");
+                Logger.Info($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Failed to find provider for site {site.siteNum[0]}:{site.siteNum[1]}");
             }
 
+            Logger.Info($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): **** Leaving - Search results: Found {result.Count} results for searchTitle: {searchTitle}");
             return result;
         }
 
         public async Task<MetadataResult<Movie>> GetMetadata(MovieInfo info, CancellationToken cancellationToken)
         {
+            Logger.Info($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): **** Starting");
+
             var result = new MetadataResult<Movie>
             {
                 HasMetadata = false,
@@ -168,6 +175,7 @@ namespace PhoenixAdult.Providers
 
             if (info == null)
             {
+                Logger.Info($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Leaving early empty info");
                 return result;
             }
 
@@ -205,6 +213,7 @@ namespace PhoenixAdult.Providers
 
             if (curID == null)
             {
+                Logger.Info($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Leaving early empty curID");
                 return result;
             }
 
@@ -213,7 +222,7 @@ namespace PhoenixAdult.Providers
             var provider = Helper.GetProviderBySiteID(siteNum[0]);
             if (provider != null)
             {
-                Logger.Info($"PhoenixAdult ID: {externalID}");
+                Logger.Info($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): PhoenixAdult ID: {externalID}");
 
                 MetadataResult<BaseItem> res = null;
                 try
@@ -222,7 +231,7 @@ namespace PhoenixAdult.Providers
                 }
                 catch (Exception e)
                 {
-                    Logger.Error($"Update error: \"{e}\"");
+                    Logger.Error($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Update error: \"{e}\"");
 
                     await Analytics.Send(
                         new AnalyticsExeption
@@ -300,6 +309,8 @@ namespace PhoenixAdult.Providers
                     }
                 }
             }
+
+            Logger.Info($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): **** Leaving - Updated Metadata title: {result.Item.Name}");
 
             return result;
         }

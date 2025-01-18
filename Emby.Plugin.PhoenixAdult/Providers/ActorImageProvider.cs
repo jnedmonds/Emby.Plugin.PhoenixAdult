@@ -14,6 +14,7 @@ using MediaBrowser.Model.Providers;
 using PhoenixAdult.Configuration;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
+using PhoenixAdult.Sites;
 using static System.Net.Mime.MediaTypeNames;
 
 namespace PhoenixAdult.Providers
@@ -24,18 +25,18 @@ namespace PhoenixAdult.Providers
 
         public static async Task<List<RemoteImageInfo>> GetActorPhotos(string name, CancellationToken cancellationToken)
         {
-            Logger.Debug($"ActorImageProvider-GetActorPhotos() Starting ********************");
+            Logger.Debug($"ActorImageProvider-GetActorPhotos(): **** Starting - searchInfo: {name}");
 
             var tasks = new Dictionary<string, Task<string>>();
             var imageList = new List<RemoteImageInfo>();
 
             if (string.IsNullOrEmpty(name))
             {
-                Logger.Debug($"ActorImageProvider-GetActorPhotos() Leaving early empty name ********************");
+                Logger.Debug($"ActorImageProvider-GetActorPhotos(): **** Leaving early empty name");
                 return imageList;
             }
 
-            Logger.Info($"Searching actor images for \"{name}\"");
+            Logger.Info($"ActorImageProvider-GetActorPhotos(): Searching actor images for \"{name}\"");
 
             tasks.Add("AdultDVDEmpire", GetFromAdultDVDEmpire(name, cancellationToken));
             tasks.Add("Boobpedia", GetFromBoobpedia(name, cancellationToken));
@@ -64,7 +65,7 @@ namespace PhoenixAdult.Providers
             }
             catch (Exception e)
             {
-                Logger.Error($"GetActorPhotos error: \"{e}\"");
+                Logger.Error($"ActorImageProvider-GetActorPhotos(): GetActorPhotos error: \"{e}\"");
 
                 await Analytics.Send(
                     new AnalyticsExeption
@@ -75,7 +76,7 @@ namespace PhoenixAdult.Providers
             }
             finally
             {
-                Logger.Debug($"ActorImageProvider-GetActorPhotos() Processing images");
+                Logger.Debug($"ActorImageProvider-GetActorPhotos(): Processing images");
                 foreach (var image in tasks)
                 {
                     var res = image.Value.Result;
@@ -91,8 +92,7 @@ namespace PhoenixAdult.Providers
                 }
             }
 
-            Logger.Debug($"ActorImageProvider-GetActorPhotos() Found {imageList.Count} images");
-            Logger.Debug($"ActorImageProvider-GetActorPhotos() Leaving  ********************");
+            Logger.Debug($"ActorImageProvider-GetActorPhotos(): Found {imageList.Count} images");
 
             return imageList;
         }
@@ -107,13 +107,13 @@ namespace PhoenixAdult.Providers
 
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(BaseItem item, LibraryOptions libraryOptions, CancellationToken cancellationToken)
         {
-            Logger.Debug($"ActorImageProvider-GetImages() Starting ********************");
+            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): **** Starting");
 
             var images = new List<RemoteImageInfo>();
 
             if (item == null)
             {
-                Logger.Debug($"ActorImageProvider-GetImages() Leaving early empty item ********************");
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): **** Leaving early empty item");
                 return images;
             }
 
@@ -121,7 +121,8 @@ namespace PhoenixAdult.Providers
 
             if (item.ProviderIds.TryGetValue(this.Name, out var externalID))
             {
-                Logger.Debug($"ActorImageProvider-GetImages() Processing");
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing");
+
                 var curID = externalID.Split('#');
                 if (curID.Length > 2)
                 {
@@ -136,12 +137,12 @@ namespace PhoenixAdult.Providers
                             IEnumerable<RemoteImageInfo> imgs = new List<RemoteImageInfo>();
                             try
                             {
-                                Logger.Debug($"ActorImageProvider-GetImages() Calling Provider->GetImages");
+                                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Calling Provider->GetImages");
                                 imgs = await provider.GetImages(siteNum, curID.Skip(2).ToArray(), item, cancellationToken).ConfigureAwait(false);
                             }
                             catch (Exception e)
                             {
-                                Logger.Error($"GetImages error: \"{e}\"");
+                                Logger.Error($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): GetImages error: \"{e}\"");
 
                                 await Analytics.Send(
                                     new AnalyticsExeption
@@ -157,7 +158,10 @@ namespace PhoenixAdult.Providers
                                 {
                                     images.AddRange(imgs);
 
-                                    Logger.Debug($"ActorImageProvider-GetImages() Found {images.Count} images");
+                                    if (Plugin.Instance.Configuration.EnableDebugging)
+                                    {
+                                        Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing images");
+                                    }
                                 }
                             }
                         }
@@ -165,7 +169,10 @@ namespace PhoenixAdult.Providers
                 }
             }
 
-            Logger.Debug($"ActorImageProvider-GetImages() Validating images ********************");
+            if (Plugin.Instance.Configuration.EnableDebugging)
+            {
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Validating images");
+            }
 
             images = await ImageHelper.GetImagesSizeAndValidate(images, cancellationToken).ConfigureAwait(false);
 
@@ -182,8 +189,7 @@ namespace PhoenixAdult.Providers
                 images = images.OrderByDescending(o => o.Height).ToList();
             }
 
-            Logger.Debug($"ActorImageProvider-GetImages() Found {images.Count} images");
-            Logger.Debug($"ActorImageProvider-GetImages() Leaving  ********************");
+            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): **** Leaving - Found {images.Count} images");
 
             return images;
         }
@@ -195,13 +201,13 @@ namespace PhoenixAdult.Providers
 
         private static async Task<string> GetFromAdultDVDEmpire(string name, CancellationToken cancellationToken)
         {
-            Logger.Debug($"ActorImageProvider-GetFromAdultDVDEmpire() Starting ********************");
+            Logger.Debug($"ActorImageProvider-GetFromAdultDVDEmpire(): **** Starting");
 
             string image = null;
 
             if (string.IsNullOrEmpty(name))
             {
-                Logger.Debug($"ActorImageProvider-GetFromAdultDVDEmpire() Leaving early empty name");
+                Logger.Debug($"ActorImageProvider-GetFromAdultDVDEmpire(): Leaving early empty name");
                 return image;
             }
 
@@ -213,7 +219,7 @@ namespace PhoenixAdult.Providers
             var actorPageURL = actorData.SelectSingleText("//div[@id='performerlist']/div//a/@href");
             if (!string.IsNullOrEmpty(actorPageURL))
             {
-                Logger.Debug($"ActorImageProvider-GetFromAdultDVDEmpire() Found actor page");
+                Logger.Debug($"ActorImageProvider-GetFromAdultDVDEmpire(): Found actor page");
 
                 if (!actorPageURL.StartsWith("http", StringComparison.OrdinalIgnoreCase))
                 {
@@ -226,23 +232,23 @@ namespace PhoenixAdult.Providers
                 if (!string.IsNullOrEmpty(img))
                 {
                     image = img;
-                    Logger.Debug($"ActorImageProvider-GetFromAdultDVDEmpire() Found image");
+                    Logger.Debug($"ActorImageProvider-GetFromAdultDVDEmpire(): Found image");
                 }
             }
 
-            Logger.Debug($"ActorImageProvider-GetFromAdultDVDEmpire() Leaving  ********************");
+            Logger.Debug($"ActorImageProvider-GetFromAdultDVDEmpire(): **** Leaving  - Found {image.Length} images");
 
             return image;
         }
 
         private static async Task<string> GetFromBoobpedia(string name, CancellationToken cancellationToken)
         {
-            Logger.Debug($"ActorImageProvider-GetFromBoobpedia() Starting ********************");
+            Logger.Debug($"ActorImageProvider-GetFromBoobpedia(): **** Starting");
             string image = null;
 
             if (string.IsNullOrEmpty(name))
             {
-                Logger.Debug($"ActorImageProvider-GetFromBoobpedia() Leaving early empty name");
+                Logger.Debug($"ActorImageProvider-GetFromBoobpedia(): Leaving early empty name");
                 return image;
             }
 
@@ -255,7 +261,7 @@ namespace PhoenixAdult.Providers
             var img = actorData.SelectSingleText("//table[contains(@class, 'infobox')]//a[@class='mw-file-description']//img/@src");
             if (!string.IsNullOrEmpty(img) && !img.Contains("NoImage", StringComparison.OrdinalIgnoreCase))
             {
-                Logger.Debug($"ActorImageProvider-GetFromBoobpedia() Found actor page");
+                Logger.Debug($"ActorImageProvider-GetFromBoobpedia(): Found actor page");
 
                 if (!img.StartsWith("http", StringComparison.OrdinalIgnoreCase))
                 {
@@ -263,23 +269,23 @@ namespace PhoenixAdult.Providers
                 }
 
                 image = img;
-                Logger.Debug($"ActorImageProvider-GetFromBoobpedia() Found image");
+                Logger.Debug($"ActorImageProvider-GetFromBoobpedia(): Found image");
             }
 
-            Logger.Debug($"ActorImageProvider-GetFromBoobpedia() Leaving  ********************");
+            Logger.Debug($"ActorImageProvider-GetFromBoobpedia(): **** Leaving  - Found {image.Length} images");
 
             return image;
         }
 
         private static async Task<string> GetFromBabepedia(string name, CancellationToken cancellationToken)
         {
-            Logger.Debug($"ActorImageProvider-GetFromBabepedia() Starting ********************");
+            Logger.Debug($"ActorImageProvider-GetFromBabepedia(): **** Starting");
 
             string image = null;
 
             if (string.IsNullOrEmpty(name))
             {
-                Logger.Debug($"ActorImageProvider-GetFromBabepedia() Leaving early empty name");
+                Logger.Debug($"ActorImageProvider-GetFromBabepedia(): Leaving early empty name");
                 return image;
             }
 
@@ -291,30 +297,30 @@ namespace PhoenixAdult.Providers
             var img = actorData.SelectSingleText("//div[@id='profimg']/a/@href");
             if (!string.IsNullOrEmpty(img) && !img.StartsWith("javascript:", StringComparison.OrdinalIgnoreCase))
             {
-                Logger.Debug($"ActorImageProvider-GetFromBabepedia() Found actor page");
+                Logger.Debug($"ActorImageProvider-GetFromBabepedia(): Found actor page");
                 if (!img.StartsWith("http", StringComparison.OrdinalIgnoreCase))
                 {
                     img = "https://www.babepedia.com" + img;
                 }
 
                 image = img;
-                Logger.Debug($"ActorImageProvider-GetFromBabepedia() Found image");
+                Logger.Debug($"ActorImageProvider-GetFromBabepedia(): Found image");
             }
 
-            Logger.Debug($"ActorImageProvider-GetFromBabepedia() Leaving  ********************");
+            Logger.Debug($"ActorImageProvider-GetFromBabepedia(): **** Leaving - Found {image.Length} images");
 
             return image;
         }
 
         private static async Task<string> GetFromIAFD(string name, CancellationToken cancellationToken)
         {
-            Logger.Debug($"ActorImageProvider-GetFromIAFD() Starting ********************");
+            Logger.Debug($"ActorImageProvider-GetFromIAFD(): **** Starting");
 
             string image = null;
 
             if (string.IsNullOrEmpty(name))
             {
-                Logger.Debug($"ActorImageProvider-GetFromIAFD() Leaving early empty name");
+                Logger.Debug($"ActorImageProvider-GetFromIAFD(): Leaving early empty name");
                 return image;
             }
 
@@ -326,7 +332,7 @@ namespace PhoenixAdult.Providers
             var actorPageURL = actorData.SelectSingleText("//table[@id='tblFem']//tbody//a/@href");
             if (!string.IsNullOrEmpty(actorPageURL))
             {
-                Logger.Debug($"ActorImageProvider-GetFromIAFD() Found actor page");
+                Logger.Debug($"ActorImageProvider-GetFromIAFD(): Found actor page");
 
                 if (!actorPageURL.StartsWith("http", StringComparison.OrdinalIgnoreCase))
                 {
@@ -339,11 +345,11 @@ namespace PhoenixAdult.Providers
                 if (!actorImage.Contains("nophoto", StringComparison.OrdinalIgnoreCase))
                 {
                     image = actorImage;
-                    Logger.Debug($"ActorImageProvider-GetFromIAFD() Found image");
+                    Logger.Debug($"ActorImageProvider-GetFromIAFD(): Found image");
                 }
             }
 
-            Logger.Debug($"ActorImageProvider-GetFromIAFD() Leaving  ********************");
+            Logger.Debug($"ActorImageProvider-GetFromIAFD(): **** Leaving  - Found {image.Length} images");
 
             return image;
         }

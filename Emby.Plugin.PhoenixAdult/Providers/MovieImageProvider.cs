@@ -13,6 +13,7 @@ using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
+using PhoenixAdult.Sites;
 
 namespace PhoenixAdult.Providers
 {
@@ -31,21 +32,26 @@ namespace PhoenixAdult.Providers
 
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(BaseItem item, LibraryOptions libraryOptions, CancellationToken cancellationToken)
         {
+            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): **** Starting");
+
             IEnumerable<RemoteImageInfo> images = new List<RemoteImageInfo>();
 
             if (item == null)
             {
+                Logger.Info($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): ***** Leaving early empty item");
                 return images;
             }
 
             if (!item.ProviderIds.TryGetValue(this.Name, out var externalID))
             {
+                Logger.Info($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): ***** Leaving early empty name");
                 return images;
             }
 
             var curID = externalID.Split('#');
             if (curID.Length < 3)
             {
+                Logger.Info($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): ***** Leaving early curID less than 3 IDs");
                 return images;
             }
 
@@ -60,7 +66,7 @@ namespace PhoenixAdult.Providers
                 }
                 catch (Exception e)
                 {
-                    Logger.Error($"GetImages error: \"{e}\"");
+                    Logger.Error($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): GetImages error: \"{e}\"");
 
                     await Analytics.Send(
                         new AnalyticsExeption
@@ -73,6 +79,8 @@ namespace PhoenixAdult.Providers
 
                 images = await ImageHelper.GetImagesSizeAndValidate(images, cancellationToken).ConfigureAwait(false);
             }
+
+            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): **** Leaving - Found {images.Count()} images");
 
             return images;
         }

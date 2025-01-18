@@ -12,6 +12,7 @@ using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Providers;
 using PhoenixAdult.Helpers;
 using PhoenixAdult.Helpers.Utils;
+using PhoenixAdult.Sites;
 
 namespace PhoenixAdult.Providers
 {
@@ -21,13 +22,13 @@ namespace PhoenixAdult.Providers
 
         public async Task<IEnumerable<RemoteSearchResult>> GetSearchResults(PersonLookupInfo searchInfo, CancellationToken cancellationToken)
         {
-            Logger.Debug($"ActorProvider-GetSearchResults() Starting ********************");
+            Logger.Info($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): ***** Starting - searchInfo: Freeones {searchInfo.Name} ");
 
             var result = new List<RemoteSearchResult>();
 
             if (searchInfo == null || searchInfo.ProviderIds.Any(o => !string.IsNullOrEmpty(o.Value)))
             {
-                Logger.Debug($"ActorProvider-GetSearchResults() Leaving early empty searchInfo");
+                Logger.Info($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): ***** Leaving early empty searchInfo");
                 return result;
             }
 
@@ -35,14 +36,14 @@ namespace PhoenixAdult.Providers
 
             foreach (var siteName in providerList)
             {
-                Logger.Debug($"ActorProvider-GetSearchResults() Processing actor");
+                Logger.Info($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing actor");
 
                 var title = $"{siteName} {searchInfo.Name}";
                 var site = Helper.GetSiteFromTitle(title);
                 string actorName = Helper.GetClearTitle(title, site.siteName);
 
-                Logger.Info($"site: {site.siteNum[0]}:{site.siteNum[1]} ({site.siteName})");
-                Logger.Info($"actorName: {actorName}");
+                Logger.Info($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): site: {site.siteNum[0]}:{site.siteNum[1]} ({site.siteName})");
+                Logger.Info($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): actorName: {actorName}");
 
                 DateTime? searchDateObj = null;
                 if (searchInfo.PremiereDate.HasValue)
@@ -53,7 +54,7 @@ namespace PhoenixAdult.Providers
                 var provider = Helper.GetProviderBySiteID(site.siteNum[0]);
                 if (provider != null)
                 {
-                    Logger.Info($"provider: {provider}");
+                    Logger.Info($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): provider: {provider}");
 
                     try
                     {
@@ -61,7 +62,7 @@ namespace PhoenixAdult.Providers
                     }
                     catch (Exception e)
                     {
-                        Logger.Error($"Actor Search error: \"{e}\"");
+                        Logger.Error($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Actor Search error: \"{e}\"");
 
                         await Analytics.Send(
                             new AnalyticsExeption
@@ -80,7 +81,7 @@ namespace PhoenixAdult.Providers
                         {
                             scene.ProviderIds[this.Name] = $"{site.siteNum[0]}#{site.siteNum[1]}#" + scene.ProviderIds[this.Name];
                             scene.Name = scene.Name.Trim();
-                            Logger.Debug($"ActorProvider-GetSearchResults() Found actor {scene.Name}");
+                            Logger.Info($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): ActorProvider-GetSearchResults() Found actor {scene.Name}");
                         }
 
                         result = result.OrderByDescending(o => 100 - LevenshteinDistance.Calculate(searchInfo.Name, o.Name, StringComparison.OrdinalIgnoreCase)).ToList();
@@ -90,15 +91,14 @@ namespace PhoenixAdult.Providers
                 }
             }
 
-            Logger.Debug($"ActorProvider-GetSearchResults() Found {result.Count} actors");
-            Logger.Debug($"ActorProvider-GetSearchResults() Leaving  ********************");
+            Logger.Info($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): **** Leaving - Found {result.Count} actors");
 
             return result;
         }
 
         public async Task<MetadataResult<Person>> GetMetadata(PersonLookupInfo info, CancellationToken cancellationToken)
         {
-            Logger.Debug($"ActorProvider-GetMetadata() Starting ********************");
+            Logger.Info($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Starting ********************");
 
             var result = new MetadataResult<Person>()
             {
@@ -108,7 +108,7 @@ namespace PhoenixAdult.Providers
 
             if (info == null)
             {
-                Logger.Debug($"ActorProvider-GetMetadata() Leaving early empty Info");
+                Logger.Info($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Leaving early empty Info");
                 return result;
             }
 
@@ -133,6 +133,7 @@ namespace PhoenixAdult.Providers
 
             if (curID == null)
             {
+                Logger.Info($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): ***** Leaving early empty curID");
                 return result;
             }
 
@@ -141,7 +142,7 @@ namespace PhoenixAdult.Providers
             var provider = Helper.GetProviderBySiteID(siteNum[0]);
             if (provider != null)
             {
-                Logger.Info($"PhoenixAdult Actor ID: {externalID}");
+                Logger.Info($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): PhoenixAdult Actor ID: {externalID}");
 
                 MetadataResult<BaseItem> res = null;
                 try
@@ -150,7 +151,7 @@ namespace PhoenixAdult.Providers
                 }
                 catch (Exception e)
                 {
-                    Logger.Error($"Actor Update error: \"{e}\"");
+                    Logger.Error($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Actor Update error: \"{e}\"");
 
                     await Analytics.Send(
                         new AnalyticsExeption
@@ -170,6 +171,8 @@ namespace PhoenixAdult.Providers
 
                 if (result.HasMetadata)
                 {
+                    Logger.Info($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Actor data found");
+
                     result.Item.ProviderIds.Update(this.Name, sceneID[this.Name]);
                     result.Item.ProviderIds.Update(this.Name + "URL", result.Item.ExternalId);
 
@@ -219,9 +222,13 @@ namespace PhoenixAdult.Providers
                         result.Item.ProductionYear = result.Item.PremiereDate.Value.Year;
                     }
                 }
+                else
+                {
+                    Logger.Info($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): No Actor data found");
+                }
             }
 
-            Logger.Debug($"ActorProvider-GetSearchResults() Leaving  ********************");
+            Logger.Info($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Leaving  ********************");
 
             return result;
         }
