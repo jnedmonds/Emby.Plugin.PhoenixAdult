@@ -258,10 +258,39 @@ namespace PhoenixAdult.Sites
                 result.Add(new RemoteImageInfo
                 {
                     Url = poster,
-                    Type = ImageType.Primary,
+                    Type = ImageType.Backdrop,
                 });
             }
 
+            var posterLink = sceneData.SelectSingleText("//*[contains(@class, 'icon-camera')]/../@href");
+            var posterData = await HTML.ElementFromURL(posterLink, cancellationToken).ConfigureAwait(false);
+            if (Plugin.Instance.Configuration.EnableDebugging)
+            {
+                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing pics page: {posterLink}");
+            }
+
+            var posterImages = sceneData.SelectNodesSafe("//div[contains(@class, 'photo-grid')]//img");
+            foreach (var pic in posterImages)
+            {
+                result.Add(new RemoteImageInfo
+                {
+                    Url = $"https" + pic.Attributes["src"].Value,
+                    Type = ImageType.Primary,
+                });
+
+                result.Add(new RemoteImageInfo
+                {
+                    Url = $"https" + pic.Attributes["src"].Value,
+                    Type = ImageType.Backdrop,
+                });
+
+                if (Plugin.Instance.Configuration.EnableDebugging)
+                {
+                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                }
+            }
+
+            /*
             var photoPageURL = "https://nubiles-porn.com/photo/gallery/" + sceneID[0];
             var photoPage = await HTML.ElementFromURL(photoPageURL, cancellationToken).ConfigureAwait(false);
             var sceneImages = photoPage.SelectNodesSafe("//div[@class='img-wrapper']//source[1]");
@@ -280,6 +309,7 @@ namespace PhoenixAdult.Sites
                     Type = ImageType.Backdrop,
                 });
             }
+            */
 
             Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): **** Leaving - Found {result.Count} images");
 

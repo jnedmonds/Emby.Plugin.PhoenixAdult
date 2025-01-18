@@ -41,7 +41,7 @@ namespace PhoenixAdult.Sites
 
             var searchResultNodes = searchData.SelectNodesSafe("//div[@class='scene-grid-item']/a[@class='contain-img']");
 
-            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found results {searchResultNodes.Count} now processing");
+            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found {searchResultNodes.Count} results now processing");
 
             foreach (var nodsearchResultNode in searchResultNodes)
             {
