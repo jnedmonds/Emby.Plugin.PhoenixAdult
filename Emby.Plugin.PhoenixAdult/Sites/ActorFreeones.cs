@@ -95,7 +95,7 @@ namespace PhoenixAdult.Sites
 
             Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Actor Name: {result.Item.OriginalTitle}");
 
-            string overview = string.Empty;
+            string overview;
             string ethenticity = actorData.SelectSingleText("//span[@data-test='link_span_ethnicity']/text()") ?? "Unknown";
             string braSize = actorData.SelectSingleText("//span[@data-test='link_span_bra']/text()") ?? "Unknown";
             string boobType = actorData.SelectSingleText("//span[@data-test='link_span_boobs']/text()") ?? "Unknown";
@@ -106,15 +106,8 @@ namespace PhoenixAdult.Sites
             string piercings = actorData.SelectSingleText("//span[@data-test='link_span_piercingLocations']/text()");
             string piercingLocations = actorData.SelectSingleText("//span[@data-test='link_span_piercingLocations']/text()");
 
-            if (!string.IsNullOrEmpty(ethenticity))
-            {
-                overview += $"Ethenticity: {ethenticity} \n";
-            }
-
-            if (!string.IsNullOrEmpty(braSize))
-            {
-                overview += $"Measurements: {braSize}/{boobType} - {height}/{weight} - {waist}/{hip} \n";
-            }
+            overview = $"Ethenticity: {ethenticity} \n";
+            overview += $"Measurements: {braSize}/{boobType} - {height}/{weight} - {waist}/{hip} \n";
 
             if (piercings.ToUpper() == "YES")
             {
