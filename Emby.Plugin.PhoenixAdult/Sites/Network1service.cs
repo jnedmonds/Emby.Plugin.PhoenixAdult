@@ -116,6 +116,8 @@ namespace PhoenixAdult.Sites
                 return result;
             }
 
+            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): token: {instanceToken}");
+
             foreach (var sceneType in sceneTypes)
             {
                 Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Searching for results as {sceneType}");

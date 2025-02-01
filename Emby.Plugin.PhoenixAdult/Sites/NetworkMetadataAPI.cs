@@ -54,6 +54,7 @@ namespace PhoenixAdult.Sites
             }
 
             Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Searching for results");
+            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): token: {Plugin.Instance.Configuration.MetadataAPIToken}");
 
             string url = Helper.GetSearchSearchURL(siteNum) + $"/scenes?parse={searchTitle}";
             var searchResults = await GetDataFromAPI(url, cancellationToken).ConfigureAwait(false);

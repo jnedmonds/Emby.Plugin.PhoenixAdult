@@ -23,6 +23,8 @@ namespace PhoenixAdult.Sites
     {
         public static async Task<string> GetAPIKey(int[] siteNum, CancellationToken cancellationToken)
         {
+            Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): ***** Starting - siteNum: {siteNum.ToString()}");
+
             var result = string.Empty;
 
             if (siteNum == null)
@@ -37,15 +39,35 @@ namespace PhoenixAdult.Sites
             }
 
             var keyName = new Uri(Helper.GetSearchBaseURL(siteNum)).Host;
+            if (Plugin.Instance.Configuration.EnableDebugging)
+            {
+                Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): keyName: {keyName}");
+            }
+
             if (db.ContainsKey(keyName))
             {
+                if (Plugin.Instance.Configuration.EnableDebugging)
+                {
+                    Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): Found in db");
+                }
+
                 string token = (string)db[keyName],
                     res = Encoding.UTF8.GetString(Helper.ConvertFromBase64String(token) ?? Array.Empty<byte>());
+                if (Plugin.Instance.Configuration.EnableDebugging)
+                {
+                    Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): token: {token}");
+                    Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}():   res: {res}");
+                }
 
                 if (res.Contains("validUntil") && int.TryParse(res.Split("validUntil=")[1].Split("&")[0], out var timestamp))
                 {
                     if (timestamp > DateTimeOffset.UtcNow.ToUnixTimeSeconds())
                     {
+                        if (Plugin.Instance.Configuration.EnableDebugging)
+                        {
+                            Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): still valid");
+                        }
+
                         result = token;
                     }
                 }
@@ -53,22 +75,47 @@ namespace PhoenixAdult.Sites
 
             if (string.IsNullOrEmpty(result))
             {
+                if (Plugin.Instance.Configuration.EnableDebugging)
+                {
+                    Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): not found in db");
+                }
+
                 var http = await HTTP.Request(Helper.GetSearchBaseURL(siteNum) + "/en/login", cancellationToken).ConfigureAwait(false);
                 if (http.IsOK)
                 {
+                    if (Plugin.Instance.Configuration.EnableDebugging)
+                    {
+                        Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): loaded webpage");
+                    }
+
                     var regEx = Regex.Match(http.Content, "\"apiKey\":\"(.*?)\"");
                     if (regEx.Groups.Count > 0)
                     {
+                        if (Plugin.Instance.Configuration.EnableDebugging)
+                        {
+                            Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): found apiKey");
+                        }
+
                         result = regEx.Groups[1].Value;
                     }
                 }
 
                 if (db.ContainsKey(keyName))
                 {
+                    if (Plugin.Instance.Configuration.EnableDebugging)
+                    {
+                        Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): updating in db");
+                    }
+
                     db[keyName] = result;
                 }
                 else
                 {
+                    if (Plugin.Instance.Configuration.EnableDebugging)
+                    {
+                        Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): adding to db");
+                    }
+
                     db.Add(keyName, result);
                 }
 
@@ -76,11 +123,21 @@ namespace PhoenixAdult.Sites
                 Plugin.Instance.SaveConfiguration();
             }
 
+            Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): **** Leaving");
+
             return result;
         }
 
         public static async Task<JObject> GetDataFromAPI(string url, string indexName, string referer, string searchParams, CancellationToken cancellationToken)
         {
+            Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): ***** Starting");
+            if (Plugin.Instance.Configuration.EnableDebugging)
+            {
+                Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): *****            url: {url}");
+                Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): *****      indexName: {indexName}");
+                Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): *****   searchParams: {searchParams}");
+            }
+
             JObject json = null;
 
             var text = $"{{'requests':[{{'indexName':'{indexName}','params':'{searchParams}'}}]}}".Replace('\'', '"');
@@ -93,24 +150,31 @@ namespace PhoenixAdult.Sites
             var http = await HTTP.Request(url, HttpMethod.Post, param, cancellationToken, headers).ConfigureAwait(false);
             if (http.IsOK)
             {
+                if (Plugin.Instance.Configuration.EnableDebugging)
+                {
+                    Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): Page loaded");
+                }
+
                 json = JObject.Parse(http.Content);
             }
+
+            Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): **** Leaving");
 
             return json;
         }
 
         public async Task<List<RemoteSearchResult>> Search(int[] siteNum, string searchTitle, DateTime? searchDate, CancellationToken cancellationToken)
         {
-            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): ***** Starting - searchTitle: {searchTitle}");
+            Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): ***** Starting - searchTitle: {searchTitle}");
 
             var result = new List<RemoteSearchResult>();
             if (siteNum == null || string.IsNullOrEmpty(searchTitle))
             {
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): ***** Leaving early empty search title");
+                Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): ***** Leaving early empty search title");
                 return result;
             }
 
-            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Searching for results");
+            Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): Searching for results");
 
             var searchSceneID = searchTitle.Split()[0];
             if (!int.TryParse(searchSceneID, out _))
@@ -120,6 +184,11 @@ namespace PhoenixAdult.Sites
 
             string apiKEY = await GetAPIKey(siteNum, cancellationToken).ConfigureAwait(false),
                    searchParams;
+
+            if (Plugin.Instance.Configuration.EnableDebugging)
+            {
+                Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): apiKey: {apiKEY}");
+            }
 
             var sceneTypes = new List<string> { "scenes", "movies" };
             foreach (var sceneType in sceneTypes)
@@ -145,11 +214,11 @@ namespace PhoenixAdult.Sites
 
                 if (searchResults == null)
                 {
-                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): ***** Leaving early empty search results");
+                    Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): ***** Leaving early empty search results");
                     return result;
                 }
 
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found results {searchResults.Count} now processing");
+                Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): Found results {searchResults.Count} now processing");
 
                 foreach (JObject searchResult in searchResults["results"].First["hits"])
                 {
@@ -157,7 +226,7 @@ namespace PhoenixAdult.Sites
                         sceneName = (string)searchResult["title"],
                         curID;
                     DateTime? sceneDateObj;
-                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found title: {sceneName}");
+                    Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): Found title: {sceneName}");
 
                     if (sceneType == "scenes")
                     {
@@ -200,14 +269,14 @@ namespace PhoenixAdult.Sites
                 }
             }
 
-            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): **** Leaving - Search results: Found {result.Count} results for searchTitle: {searchTitle}");
+            Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): **** Leaving - Search results: Found {result.Count} results for searchTitle: {searchTitle}");
 
             return result;
         }
 
         public async Task<MetadataResult<BaseItem>> Update(int[] siteNum, string[] sceneID, CancellationToken cancellationToken)
         {
-            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): **** Starting");
+            Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): **** Starting");
 
             var result = new MetadataResult<BaseItem>()
             {
@@ -217,7 +286,7 @@ namespace PhoenixAdult.Sites
 
             if (sceneID == null)
             {
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Leaving early empty sceneID");
+                Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): Leaving early empty sceneID");
                 return result;
             }
 
@@ -261,19 +330,19 @@ namespace PhoenixAdult.Sites
 
             if (Plugin.Instance.Configuration.EnableDebugging)
             {
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): externalID: {result.Item.ExternalId}");
+                Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): externalID: {result.Item.ExternalId}");
             }
 
-            Logger.Info($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Loading scene: {sceneURL}");
+            Logger.Info($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): Loading scene: {sceneURL}");
             result.Item.Name = (string)sceneData["title"];
 
-            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): title: {result.Item.Name}");
+            Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): title: {result.Item.Name}");
 
             var description = (string)sceneData["description"];
             result.Item.Overview = description.Replace("</br>", "\n", StringComparison.OrdinalIgnoreCase);
             if (Plugin.Instance.Configuration.EnableDebugging)
             {
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): overview: {result.Item.Overview}");
+                Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): overview: {result.Item.Overview}");
             }
 
             var network = (string)sceneData["network_name"];
@@ -282,7 +351,7 @@ namespace PhoenixAdult.Sites
                 result.Item.AddStudio(network);
                 if (Plugin.Instance.Configuration.EnableDebugging)
                 {
-                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): studio: {result.Item.Studios[0]}");
+                    Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): studio: {result.Item.Studios[0]}");
                 }
             }
 
@@ -291,13 +360,13 @@ namespace PhoenixAdult.Sites
                 result.Item.AddStudio((string)sceneData["studio_name"]);
                 if (Plugin.Instance.Configuration.EnableDebugging)
                 {
-                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): studio: {(string)sceneData["studio_name"]}");
+                    Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): studio: {(string)sceneData["studio_name"]}");
                 }
             }
 
             if (Plugin.Instance.Configuration.EnableDebugging)
             {
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Finding Premier date");
+                Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): Finding Premier date");
             }
 
             if (DateTime.TryParseExact(sceneID[2], "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sceneDateObj))
@@ -305,13 +374,13 @@ namespace PhoenixAdult.Sites
                 result.Item.PremiereDate = sceneDateObj;
                 if (Plugin.Instance.Configuration.EnableDebugging)
                 {
-                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Premier date added {sceneDateObj.ToString()}");
+                    Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): Premier date added {sceneDateObj.ToString()}");
                 }
             }
 
             if (Plugin.Instance.Configuration.EnableDebugging)
             {
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing Genres");
+                Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): Processing Genres");
             }
 
             foreach (var genreLink in sceneData["categories"])
@@ -323,14 +392,14 @@ namespace PhoenixAdult.Sites
                     result.Item.AddGenre(genreName);
                     if (Plugin.Instance.Configuration.EnableDebugging)
                     {
-                        Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found genre: {genreName}");
+                        Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): Found genre: {genreName}");
                     }
                 }
             }
 
             if (Plugin.Instance.Configuration.EnableDebugging)
             {
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing Actors");
+                Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): Processing Actors");
             }
 
             foreach (var actorLink in sceneData["actors"])
@@ -353,7 +422,7 @@ namespace PhoenixAdult.Sites
                     };
                     if (Plugin.Instance.Configuration.EnableDebugging)
                     {
-                        Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found actor: {actorName}");
+                        Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): Found actor: {actorName}");
                     }
 
                     var actorPhoto = $"https://images-fame.gammacdn.com/actors{actorPhotoURL}";
@@ -361,27 +430,27 @@ namespace PhoenixAdult.Sites
                     if (actorPhotoURL != null)
                     {
                         actor.ImageUrl = actorPhoto;
-                        Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Found actor photoURL: {actorPhoto}");
+                        Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): Found actor photoURL: {actorPhoto}");
                     }
 
                     result.People.Add(actor);
                 }
             }
 
-            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): **** Leaving - Updated title: {result.Item.Name}");
+            Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): **** Leaving - Updated title: {result.Item.Name}");
 
             return result;
         }
 
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(int[] siteNum, string[] sceneID, BaseItem item, CancellationToken cancellationToken)
         {
-            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): **** Starting");
+            Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): **** Starting");
 
             var result = new List<RemoteImageInfo>();
 
             if (sceneID == null)
             {
-                Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Leaving early empty sceneID");
+                Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): Leaving early empty sceneID");
                 return result;
             }
 
@@ -425,7 +494,7 @@ namespace PhoenixAdult.Sites
             {
                 if (Plugin.Instance.Configuration.EnableDebugging)
                 {
-                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                    Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): Processing image");
                 }
 
                 image = (sceneData.ContainsKey("url_movie_title") ? sceneData["url_movie_title"] : sceneData["url_title"]).ToString().ToLowerInvariant().Replace('-', '_');
@@ -447,7 +516,7 @@ namespace PhoenixAdult.Sites
             {
                 if (Plugin.Instance.Configuration.EnableDebugging)
                 {
-                    Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): Processing image");
+                    Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): Processing image");
                 }
 
                 image = (string)sceneData["pictures"].Last(o => !o.ToString().Equals("resized", StringComparison.OrdinalIgnoreCase));
@@ -465,7 +534,7 @@ namespace PhoenixAdult.Sites
                 });
             }
 
-            Logger.Debug($"{this.GetType().Name}-{IProviderBase.GetCurrentMethod()}(): **** Leaving - Found {result.Count} images");
+            Logger.Debug($"{nameof(NetworkGammaEnt)}-{IProviderBase.GetCurrentMethod()}(): **** Leaving - Found {result.Count} images");
 
             return result;
         }
